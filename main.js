@@ -23,12 +23,14 @@ function createAnimeNameMap() {
             picture: element.picture,
             malId: id
         }   
-        if(result[element.title.toLowerCase()] == undefined) {
-            result[element.title.toLowerCase()] = anime
+        let title = element.title.toLowerCase()
+        if(result[title] == undefined) {
+            result[title] = anime
         }
         element.synonyms.forEach(alt => {
-            if(result[alt.toLowerCase()] == undefined && alt.length > 2) {
-                result[alt.toLowerCase()] = anime
+            let altTitle = alt.toLowerCase()
+            if(result[altTitle] == undefined && alt.length > 2) {
+                result[altTitle] = anime
             }
         })
     }
@@ -47,60 +49,54 @@ client.on('ready', () => {
 })
 
 function fuzzyMatch(text) {
+    if(text == '') return null
     let anime = animeNames[text]
 
     if(anime == undefined) {
         for(let i=0;i<sortedNames.length;i++) {
-            if(lev.get(text, sortedNames[i])<=2) {
+            if(lev.get(text, sortedNames[i])<=3) {
                 console.log(`Match: ${sortedNames[i]}`)
                 anime = animeNames[sortedNames[i]]
                 break
             }
         }
+        if(anime==undefined) {
+            anime = null
+        }
     }
     return anime
-}
-
-function substrMatch(text) {
-    let result = []
-    sortedNames.forEach(name => {
-        if(name.length > 4 && text.includes(name)) {
-            result.push(animeNames[name])
-        }
-    })
-    return [...new Set(result)]
 }
 
 function postDesc(anime, info, msg) {
     console.log(info)
     const attachment = new Attachment(anime.picture)
-    msg.channel.send(`**${anime.title}**\n${info.synopsis}`, attachment)
+    msg.channel.send(`**${anime.title}**\n${info.synopsis || '*No synopsis was found for this title*'}`, attachment)
 }
 
 client.on('message', msg => {
   if (!msg.author.bot && msg.channel.name == 'anime-suggestions') {
-    let matches = {}
     let text = msg.content.toLowerCase()
 
-    let anime = fuzzyMatch(text)
+    let regex = /(\*{1,2}|\~{2}|\"|_|'|`)(.+?)\1/
 
-    if(anime == undefined) {
-        anime = substrMatch(text)
-        anime.forEach(match => {
-            mal.findAnime(match.malId)
-                .then(info => {
-                    if(info.popularity <= 300) {
-                        postDesc(match, info, msg)
-                    }
-                })
-        })
-    } else {
-        mal.findAnime(anime.malId)
-            .then(info => {
-                postDesc(anime, info, msg)
-            })
-            .catch(err => console.log(err))
+    let titles = []
+    let matches = text.match(regex)
+    while(matches != null && matches.length >= 3) {
+        titles.push(matches[2])
+        text = text.replace(matches[0], '')
+        matches = text.match(regex)
     }
+
+    titles.forEach(title => {
+        let anime = fuzzyMatch(title)
+        if(anime != null) {
+            mal.findAnime(anime.malId)
+                .then(info => {
+                    postDesc(anime, info, msg)
+                })
+                .catch(err => console.log(err))
+        }
+    })
 
   }
 })
