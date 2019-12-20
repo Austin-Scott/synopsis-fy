@@ -9,6 +9,8 @@
   "author": "Austin Scott",
   "license": "MIT",
   "dependencies": {
-    "discord.js": "^11.5.1"
+    "discord.js": "^11.5.1",
+    "fast-levenshtein": "^2.0.6",
+    "jikan-node": "^1.2.0"
   }
 }

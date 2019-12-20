@@ -1,6 +1,9 @@
 const { Client, Attachment } = require('discord.js')
 const client = new Client()
 const fs = require("fs")
+const Jikan = require('jikan-node')
+const mal = new Jikan()
+const lev = require('fast-levenshtein')
 
 
 function createAnimeNameMap() {
@@ -35,20 +38,68 @@ function createAnimeNameMap() {
 }
 const animeNames = createAnimeNameMap()
 
+const sortedNames = Object.keys(animeNames).sort((a, b)=>{
+    return b.length - a.length
+})
+
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`)
 })
 
+function fuzzyMatch(text) {
+    let anime = animeNames[text]
+
+    if(anime == undefined) {
+        for(let i=0;i<sortedNames.length;i++) {
+            if(lev.get(text, sortedNames[i])<=2) {
+                console.log(`Match: ${sortedNames[i]}`)
+                anime = animeNames[sortedNames[i]]
+                break
+            }
+        }
+    }
+    return anime
+}
+
+function substrMatch(text) {
+    let result = []
+    sortedNames.forEach(name => {
+        if(name.length > 4 && text.includes(name)) {
+            result.push(animeNames[name])
+        }
+    })
+    return [...new Set(result)]
+}
+
+function postDesc(anime, info, msg) {
+    console.log(info)
+    const attachment = new Attachment(anime.picture)
+    msg.channel.send(`**${anime.title}**\n${info.synopsis}`, attachment)
+}
+
 client.on('message', msg => {
   if (!msg.author.bot && msg.channel.name == 'anime-suggestions') {
     let matches = {}
-    let text = msg.content
+    let text = msg.content.toLowerCase()
 
-    let anime = animeNames[text.toLowerCase()]
+    let anime = fuzzyMatch(text)
 
-    if(anime != undefined) {
-        const attachment = new Attachment(anime.picture)
-        msg.channel.send(anime.title, attachment)
+    if(anime == undefined) {
+        anime = substrMatch(text)
+        anime.forEach(match => {
+            mal.findAnime(match.malId)
+                .then(info => {
+                    if(info.popularity <= 300) {
+                        postDesc(match, info, msg)
+                    }
+                })
+        })
+    } else {
+        mal.findAnime(anime.malId)
+            .then(info => {
+                postDesc(anime, info, msg)
+            })
+            .catch(err => console.log(err))
     }
 
   }
