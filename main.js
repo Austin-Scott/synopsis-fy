@@ -5,11 +5,34 @@ const Jikan = require('jikan-node')
 const mal = new Jikan()
 const lev = require('fast-levenshtein')
 
-// Max matching Levenshtein distance between strings
-const maximumStringMatchDistance = 3
+let model = loadOrCreateNewModel()
 
-// Min search text for substring matching
-const minimumSubStringMatchingLength = 5
+function saveServerPreferences(serverId, preferences) {
+    model[serverId] = preferences
+    fs.writeFileSync('preferences.json', JSON.stringify(model))
+}
+
+function getServerPreferences(serverId) {
+    let existingPreferences = model[serverId]
+    if(existingPreferences) return existingPreferences
+    return createNewServerPreferences()
+}
+
+function createNewServerPreferences() {
+    return {
+        maximumStringMatchDistance: 3,
+        minimumSubStringMatchingLength: 5,
+        allowedChannels: []
+    }
+}
+
+function loadOrCreateNewModel() {
+    try {
+        return JSON.parse(fs.readFileSync('preferences.json'))
+    } catch (error) {
+        return {}
+    }
+}
 
 /**
  * Returns an object acting as a HashMap between all anime titles to objects with info about its title
@@ -167,8 +190,45 @@ function postDesc(anime, info, msg) {
  * Executed whenever a message is posted to any channel on any server
  */
 client.on('message', msg => {
+    let serverId = msg.guild.id
+    let serverPreferences = getServerPreferences(serverId)
+
+    let isAdmin = msg.member.hasPermission('ADMINISTRATOR')
+
+    if(!msg.author.bot && msg.content.startsWith('s!')) {
+        let text = msg.content
+        let addChannel = text.match(/s\!enable (\S+)/)
+        let removeChannel = text.match(/s\!disable (\S+)/)
+        if(text == "s!list") {
+            msg.reply(`Active channel list:\n${serverPreferences.allowedChannels.join(',\n')}`)
+        } else if(addChannel && addChannel.length == 2) {
+            if(isAdmin) {
+                let channelName = addChannel[1]
+                serverPreferences.allowedChannels.push(channelName)
+                saveServerPreferences(serverId, serverPreferences)
+                msg.reply(`You have successfully added "${channelName}" to my active channel list`)
+            } else {
+                msg.reply("You must be an admin to perform that action")
+            }
+        } else if(removeChannel && removeChannel.length == 2) {
+            if(isAdmin) {
+                let channelName = removeChannel[1]
+
+                serverPreferences.allowedChannels = serverPreferences.allowedChannels.filter(channel => channelName != channel)
+                saveServerPreferences(serverId, serverPreferences)
+                msg.reply(`You have successfully removed "${channelName}" from my active channel list`)
+                
+            } else {
+                msg.reply("You must be an admin to perform that action")
+            }
+        } else {
+            msg.reply('Command list:\nEnable this bot in a channel: `s!enable CHANNEL-NAME-HERE`\nDisable this bot in a channel: `s!disable CHANNEL-NAME-HERE`\nView active channel list: `s!list`\nPrint this command list: `s!help`')
+        }
+        return
+    }
+
     // Continue only if the poster is not a bot and the channel is 'anime-suggestions'
-    if (!msg.author.bot && msg.channel.name == 'anime-suggestions') {
+    if (!msg.author.bot && serverPreferences.allowedChannels.includes(msg.channel.name)) {
 
         // Raw message received converted to lower case
         let text = msg.content.toLowerCase()
