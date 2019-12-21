@@ -22,7 +22,7 @@ function createNewServerPreferences() {
     return {
         maximumStringMatchDistance: 3,
         minimumSubStringMatchingLength: 5,
-        allowedChannels: []
+        allowedChannels: ['anime-suggestions']
     }
 }
 
