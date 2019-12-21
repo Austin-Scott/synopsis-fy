@@ -107,9 +107,10 @@ client.on('ready', () => {
  * Tries to match some text to an anime title. If no matches are found it will first try to find a substring match 
  *  otherwise it will try to find near matches with the Levenshtein distance algorithm.
  * @param {String} text Text possibly containing an anime title to be matched
+ * @param {Object} serverPreferences
  * @returns {Anime} Metadata for show if matched, null otherwise
  */
-function fuzzyMatch(text) {
+function fuzzyMatch(text, serverPreferences) {
     if (text == '') return null
 
     // Try to match title exactly
@@ -129,7 +130,7 @@ function fuzzyMatch(text) {
         // For each known anime title
         Object.keys(animeNames).forEach(title => {
             // If our search text is long enough to substring match and there is a match
-            if (title.length >= minimumSubStringMatchingLength && title.includes(text)) {
+            if (title.length >= serverPreferences.minimumSubStringMatchingLength && title.includes(text)) {
                 let currentSubstringMatch = text.length / title.length
 
                 if (currentSubstringMatch > closestSubstringMatch) {
@@ -151,7 +152,7 @@ function fuzzyMatch(text) {
         })
 
         // If none of the fuzzy matches were close enough
-        if (smallestDistance > maximumStringMatchDistance) {
+        if (smallestDistance > serverPreferences.maximumStringMatchDistance) {
             bestFuzzyMatch = null
         }
 
@@ -349,7 +350,7 @@ function parseAnimeTitles(msg, serverPreferences) {
         // For each possible title
         titles.forEach(title => {
             // Try to match the title
-            let anime = fuzzyMatch(title)
+            let anime = fuzzyMatch(title, serverPreferences)
 
             // If the match was successful
             if (anime != null) {
