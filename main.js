@@ -229,7 +229,7 @@ function addChannel(msg, addChannelMatcher, serverPreferences, serverId, isAdmin
             if (!serverPreferences.allowedChannels.includes(channelName)) {
                 serverPreferences.allowedChannels.push(channelName)
                 saveServerPreferences(serverId, serverPreferences)
-                msg.reply(`I will now response to anime titles in "${channelName}" with their synopses`)
+                msg.reply(`I will now respond to anime titles in "${channelName}" with their synopses`)
             } else {
                 msg.reply("That channel already had synopsis responses enabled")
             }
