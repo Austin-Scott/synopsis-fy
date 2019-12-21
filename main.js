@@ -70,11 +70,6 @@ function createAnimeNameMap() {
 // Hash map mapping all anime titles to their metadata
 const animeNames = createAnimeNameMap()
 
-// Array of all titles keyed in the HashMap in descending order based on title length
-const sortedNames = Object.keys(animeNames).sort((a, b) => {
-    return b.length - a.length
-})
-
 /**
  * Executed when this bot has been logged in successfully
  */
@@ -96,20 +91,24 @@ function fuzzyMatch(text) {
     // If the text is not an exact match to a title
     if (anime == undefined) {
         
-        // For each known anime title in descending order based on title length
-        for (let i = 0; i < sortedNames.length; i++) {
-            let title = sortedNames[i]
+        // Stores the smallest distance between our text and any title
+        let smallestDistance = Number.MAX_SAFE_INTEGER
+
+        // For each known anime title
+        Object.keys(animeNames).forEach(title => {
+            let currentDistance = lev.get(text, title)
 
             // If the text is deemed 'close enough' to the title
-            if (lev.get(text, title) <= maximumStringMatchDistance) {
-                console.log(`Match: ${title}`)
+            if (currentDistance < smallestDistance) {
+                smallestDistance = currentDistance
                 anime = animeNames[title]
-                break
             }
-        }
+        })
+
+        console.log(`Text: "${text}" Closest match: "${anime.title}" Score: ${smallestDistance}`)
 
         // If their were no titles 'close enough' to our search text
-        if (anime == undefined) {
+        if (smallestDistance > maximumStringMatchDistance) {
             anime = null
         }
     }
