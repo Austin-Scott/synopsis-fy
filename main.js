@@ -8,6 +8,9 @@ const lev = require('fast-levenshtein')
 // Max matching Levenshtein distance between strings
 const maximumStringMatchDistance = 3
 
+// Min search text for substring matching
+const minimumSubStringMatchingLength = 5
+
 /**
  * Returns an object acting as a HashMap between all anime titles to objects with info about its title
  */
@@ -78,7 +81,8 @@ client.on('ready', () => {
 })
 
 /**
- * Tries to match some text to an anime title. If no matches are found it will try to find near matches with the Levenshtein distance algorithm.
+ * Tries to match some text to an anime title. If no matches are found it will first try to find a substring match 
+ *  otherwise it will try to find near matches with the Levenshtein distance algorithm.
  * @param {String} text Text possibly containing an anime title to be matched
  * @returns {Anime} Metadata for show if matched, null otherwise
  */
@@ -90,28 +94,53 @@ function fuzzyMatch(text) {
 
     // If the text is not an exact match to a title
     if (anime == undefined) {
-        
+
+        // Stores the best ratio of search text length / title length for valid substring match
+        let closestSubstringMatch = 0.0
+        let bestSubstringMatch = null
+
         // Stores the smallest distance between our text and any title
         let smallestDistance = Number.MAX_SAFE_INTEGER
+        let bestFuzzyMatch = null
 
         // For each known anime title
         Object.keys(animeNames).forEach(title => {
-            let currentDistance = lev.get(text, title)
+            // If our search text is long enough to substring match and there is a match
+            if (title.length >= minimumSubStringMatchingLength && title.includes(text)) {
+                let currentSubstringMatch = text.length / title.length
 
-            // If the text is deemed 'close enough' to the title
-            if (currentDistance < smallestDistance) {
-                smallestDistance = currentDistance
-                anime = animeNames[title]
+                if (currentSubstringMatch > closestSubstringMatch) {
+                    bestSubstringMatch = animeNames[title]
+                    closestSubstringMatch = currentSubstringMatch
+                }
+            }
+
+            // If there has not been a substring match yet
+            if (bestSubstringMatch == null) {
+                let currentDistance = lev.get(text, title)
+
+                // If the text is deemed 'close enough' to the title
+                if (currentDistance < smallestDistance) {
+                    smallestDistance = currentDistance
+                    bestFuzzyMatch = animeNames[title]
+                }
             }
         })
 
-        console.log(`Text: "${text}" Closest match: "${anime.title}" Score: ${smallestDistance}`)
-
-        // If their were no titles 'close enough' to our search text
-        if (smallestDistance > maximumStringMatchDistance) {
-            anime = null
+        // If none of the fuzzy matches were close enough
+        if(smallestDistance > maximumStringMatchDistance) {
+            bestFuzzyMatch = null
         }
+
+        // If there was a substring match
+        if(bestSubstringMatch != null) {
+            anime = bestSubstringMatch
+        } else {
+            anime = bestFuzzyMatch
+        }
+
     }
+
     return anime
 }
 
@@ -162,7 +191,7 @@ client.on('message', msg => {
         titles.forEach(title => {
             // Try to match the title
             let anime = fuzzyMatch(title)
-            
+
             // If the match was successful
             if (anime != null) {
                 // Request information from MyAnimeList
