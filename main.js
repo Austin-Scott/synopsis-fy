@@ -130,7 +130,7 @@ function fuzzyMatch(text, serverPreferences) {
         // For each known anime title
         Object.keys(animeNames).forEach(title => {
             // If our search text is long enough to substring match and there is a match
-            if (title.length >= serverPreferences.minimumSubStringMatchingLength && title.includes(text)) {
+            if (text.length >= serverPreferences.minimumSubStringMatchingLength && title.includes(text)) {
                 let currentSubstringMatch = text.length / title.length
 
                 if (currentSubstringMatch > closestSubstringMatch) {
@@ -140,7 +140,7 @@ function fuzzyMatch(text, serverPreferences) {
             }
 
             // If there has not been a substring match yet
-            if (bestSubstringMatch == null) {
+            if (text.length > 3 && bestSubstringMatch == null) {
                 let currentDistance = lev.get(text, title)
 
                 // If the text is deemed 'close enough' to the title
@@ -380,3 +380,9 @@ client.on('message', msg => {
 
 // Authenticate this bot using its private key
 client.login(JSON.parse(fs.readFileSync("token.json")).token)
+
+// Export functions for testing
+module.exports = {
+    fuzzyMatch: fuzzyMatch,
+    createNewServerPreferences: createNewServerPreferences
+}

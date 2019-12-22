@@ -4,13 +4,14 @@
   "description": "Discord bot that replies to posts containing anime titles with the synopsis of those anime.",
   "main": "main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "author": "Austin Scott",
   "license": "MIT",
   "dependencies": {
     "discord.js": "^11.5.1",
     "fast-levenshtein": "^2.0.6",
+    "jest": "^24.9.0",
     "jikan-node": "^1.2.0"
   }
 }
