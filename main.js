@@ -100,6 +100,7 @@ const animeNames = createAnimeNameMap()
  * Executed when this bot has been logged in successfully
  */
 client.on('ready', () => {
+    client.user.setPresence({ game: { name: '| s!help', type: 'WATCHING' }, status: 'online' })
     console.log(`Logged in as ${client.user.tag}!`)
 })
 
