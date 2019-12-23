@@ -13,5 +13,8 @@
     "fast-levenshtein": "^2.0.6",
     "jest": "^24.9.0",
     "jikan-node": "^1.2.0"
+  },
+  "devDependencies": {
+    "pre-push": "^0.1.1"
   }
 }
