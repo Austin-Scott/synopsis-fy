@@ -203,6 +203,21 @@ function getListOfTextChannels(msg) {
 /**
  * 
  * @param {Message} msg 
+ * @param {string} id Id of channel
+ * @returns {string} Name of channel if exists
+ */
+function getNameOfChannelById(msg, id) {
+    let allChannels = msg.guild.channels
+    let channel = allChannels.get(id)
+    if(channel && channel.type == 'text') {
+        return channel.name
+    }
+    return null
+}
+
+/**
+ * 
+ * @param {Message} msg 
  * @param {Object} serverPreferences
  */
 function listChannels(msg, serverPreferences) {
@@ -305,9 +320,17 @@ function parseConfigurationCommands(msg, serverPreferences, serverId) {
 
         let text = msg.content
 
+        let channelIdMatcher = text.match(/s!\w+ <#(\d+)>/)
+        if(channelIdMatcher) {
+            let channelName = getNameOfChannelById(msg, channelIdMatcher[1])
+            if(channelName) {
+                text = text.replace(`<#${channelIdMatcher[1]}>`, channelName)
+            }
+        }
+
         let listChannelMatcher = text.match(/s!list/)
-        let addChannelMatcher = text.match(/s\!enable (\S+)/)
-        let removeChannelMatcher = text.match(/s\!disable (\S+)/)
+        let addChannelMatcher = text.match(/s!enable (\S+)/)
+        let removeChannelMatcher = text.match(/s!disable (\S+)/)
 
         if (listChannelMatcher) {
             listChannels(msg, serverPreferences)
