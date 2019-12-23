@@ -6,6 +6,9 @@
   "scripts": {
     "test": "jest"
   },
+  "pre-commit": [
+    "test"
+  ],
   "author": "Austin Scott",
   "license": "MIT",
   "dependencies": {
@@ -13,5 +16,8 @@
     "fast-levenshtein": "^2.0.6",
     "jest": "^24.9.0",
     "jikan-node": "^1.2.0"
+  },
+  "devDependencies": {
+    "pre-commit": "^1.2.2"
   }
 }
