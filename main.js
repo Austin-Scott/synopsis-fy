@@ -366,7 +366,7 @@ function parseAnimeTitles(msg, serverPreferences) {
         // Extract possible titles from the message
         let matches = text.match(regex)
         while (matches != null && matches.length >= 3) {
-            titles.push(matches[2])
+            titles.push(matches[2].trim())
             text = text.replace(matches[0], '')
             matches = text.match(regex)
         }
