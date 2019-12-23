@@ -6,7 +6,7 @@ const fuzzyMatch = i.fuzzyMatch
 const sp = createNewServerPreferences()
 
 test('Make sure jest is working', () => {
-    expect(1 + 2).toBe(2)
+    expect(1 + 1).toBe(2)
 })
 
 describe('fuzzyMatch function', () => {
