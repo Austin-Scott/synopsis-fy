@@ -6,6 +6,9 @@
   "scripts": {
     "test": "jest"
   },
+  "pre-push": [
+    "test"
+  ],
   "author": "Austin Scott",
   "license": "MIT",
   "dependencies": {
