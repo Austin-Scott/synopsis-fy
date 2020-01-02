@@ -115,6 +115,9 @@ client.on('ready', () => {
 function fuzzyMatch(text, serverPreferences) {
     if (text == '') return null
 
+    // Title converted to lower case
+    text = text.toLowerCase()
+
     // Try to match title exactly
     let anime = animeNames[text]
 
@@ -174,18 +177,17 @@ function fuzzyMatch(text, serverPreferences) {
  * Posts a synopsis to the channel where the information was requested
  * @param {Anime} anime Local metadata object about this anime
  * @param {Object} info Metadata directly pulled from MyAnimeList
- * @param {Message} msg Discord.js message to be used to send our response
  */
-function postDesc(anime, info, msg) {
+function postDesc(anime, info, onReply) {
     // Thumbnail for this title
     const attachment = new Attachment(anime.picture)
 
     if (info.rating && !info.rating.includes('Hentai')) {
         // This anime is SFW
-        msg.channel.send(`**${anime.title}**\n<${anime.malUrl}>\n${info.synopsis || '*No synopsis was found for this title*'}`, attachment)
+        onReply(`**${anime.title}**\n<${anime.malUrl}>\n${info.synopsis || '*No synopsis was found for this title*'}`, attachment)
     } else if (msg.channel.nsfw) {
         // The referenced anime is a hentai: add warning, remove thumbnail, and hide synopsis behind spoiler tag
-        msg.channel.send(`**${anime.title}** - ***Warning:*** __**This is a 18+ Hentai**__\n||${info.synopsis || '*No synopsis was found for this title*'}||`)
+        onReply(`**${anime.title}** - ***Warning:*** __**This is a 18+ Hentai**__\n||${info.synopsis || '*No synopsis was found for this title*'}||`)
     }
 }
 
@@ -210,7 +212,7 @@ function getListOfTextChannels(msg) {
 function getNameOfChannelById(msg, id) {
     let allChannels = msg.guild.channels
     let channel = allChannels.get(id)
-    if(channel && channel.type == 'text') {
+    if (channel && channel.type == 'text') {
         return channel.name
     }
     return null
@@ -218,84 +220,80 @@ function getNameOfChannelById(msg, id) {
 
 /**
  * 
- * @param {Message} msg 
- * @param {Object} serverPreferences
  */
-function listChannels(msg, serverPreferences) {
+function listChannels(listOfTextChannels, serverPreferences, onReply) {
     let channelList = 'Synopsis response channel list:\n'
     let activeChannelList = serverPreferences.allowedChannels
-    getListOfTextChannels(msg).forEach(channel => {
+    listOfTextChannels.forEach(channel => {
         let isEnabled = activeChannelList.includes(channel)
         channelList += `*${channel}* → ${isEnabled ? '**Enabled**' : 'Disabled'}\n`
     })
-    msg.reply(channelList)
+    onReply(channelList)
+    return true
 }
 
 /**
  * 
- * @param {Message} msg 
- * @param {Array} addChannelMatcher 
- * @param {Object} serverPreferences
- * @param {string} serverId
- * @param {boolean} isAdmin 
  */
-function addChannel(msg, addChannelMatcher, serverPreferences, serverId, isAdmin) {
+function addChannel(isAdmin, listOfTextChannels, addChannelMatcher, serverPreferences, serverId, onSavePreferences, onReply) {
     if (isAdmin) {
         let channelName = addChannelMatcher[1]
 
-        if (getListOfTextChannels(msg).includes(channelName)) {
+        if (listOfTextChannels.includes(channelName)) {
             if (!serverPreferences.allowedChannels.includes(channelName)) {
                 serverPreferences.allowedChannels.push(channelName)
-                saveServerPreferences(serverId, serverPreferences)
-                msg.reply(`I will now respond to anime titles in "${channelName}" with their synopses`)
+                onSavePreferences(serverId, serverPreferences)
+                onReply(`I will now respond to anime titles in "${channelName}" with their synopses`)
+                return true
             } else {
-                msg.reply("That channel already had synopsis responses enabled")
+                onReply("That channel already had synopsis responses enabled")
+                return true
             }
         } else {
-            msg.reply(`I could not find "${channelName}" in the list of your text channels. Please try again.`)
+            onReply(`I could not find "${channelName}" in the list of your text channels. Please try again.`)
+            return false
         }
     } else {
-        msg.reply("You must be an admin to perform that action")
+        onReply("You must be an admin to perform that action")
+        return false
     }
 }
 
 /**
  * 
- * @param {Message} msg 
- * @param {Array} removeChannelMatcher 
- * @param {Object} serverPreferences
- * @param {string} serverId
- * @param {boolean} isAdmin 
  */
-function removeChannel(msg, removeChannelMatcher, serverPreferences, serverId, isAdmin) {
+function removeChannel(isAdmin, listOfTextChannels, removeChannelMatcher, serverPreferences, serverId, onSavePreferences, onReply) {
     if (isAdmin) {
         let channelName = removeChannelMatcher[1]
 
-        if (getListOfTextChannels(msg).includes(channelName)) {
+        if (listOfTextChannels.includes(channelName)) {
             if (serverPreferences.allowedChannels.includes(channelName)) {
 
                 serverPreferences.allowedChannels = serverPreferences.allowedChannels.filter(channel => channelName != channel)
-                saveServerPreferences(serverId, serverPreferences)
-                msg.reply(`You have successfully removed "${channelName}" from my active channel list`)
+                onSavePreferences(serverId, serverPreferences)
+                onReply(`You have successfully removed "${channelName}" from my active channel list`)
+                return true
             } else {
-                msg.reply('Synopsis responses for that channel were already disabled')
+                onReply('Synopsis responses for that channel were already disabled')
+                return true
             }
         } else {
-            msg.reply(`I could not find "${channelName}" in the list of your text channels. Please try again.`)
+            onReply(`I could not find "${channelName}" in the list of your text channels. Please try again.`)
+            return false
         }
 
 
     } else {
-        msg.reply("You must be an admin to perform that action")
+        onReply("You must be an admin to perform that action")
+        return false
     }
 }
 
 /**
  * 
- * @param {Message} msg 
  */
-function printHelp(msg) {
-    msg.reply(
+function printHelp(onReply) {
+    onReply(
         `***Command list:***
 **Usable by anyone:**
 Find closest match title for my previous message: \`s!match\`
@@ -313,10 +311,9 @@ Disable synopsis responses in a specific channel: \`s!disable CHANNEL-NAME-HERE\
 
 /**
  * 
- * @param {Message} msg 
  */
-function printAbout(msg) {
-    msg.reply(
+function printAbout(onReply) {
+    onReply(
         `***About Synopsis-fy:***
 For all channels with synopsis reponses enabled this bot will respond to any anime title that is: *Italicized*, **Bolden**, __Underlined__, ~~Struckthrough~~, \`Code blocked\`, or "Quoted" with a synopsis of that anime from MyAnimeList.net
 
@@ -327,61 +324,50 @@ Add this bot to your own server: <https://discordapp.com/oauth2/authorize?&clien
 Source code: <https://github.com/Austin-Scott/synopsis-fy>
 `
     )
+    return true
 }
 
 /**
  * 
- * @param {Message} msg 
- * @param {Object} serverPreferences
- * @param {string} serverId
  */
-function parseConfigurationCommands(msg, serverPreferences, serverId) {
+function parseConfigurationCommands(isAdmin, messageContent, previousMessageContent, currentChannelName, listOfTextChannels, serverPreferences, serverId, onSavePreferences, onReply) {
 
-    let isAdmin = msg.member.hasPermission('ADMINISTRATOR')
+    if (messageContent.startsWith('s!')) {
 
-    if (!msg.author.bot && msg.content.startsWith('s!')) {
-
-        let text = msg.content
-
-        let channelIdMatcher = text.match(/s!\w+ <#(\d+)>/)
-        if(channelIdMatcher) {
-            let channelName = getNameOfChannelById(msg, channelIdMatcher[1])
-            if(channelName) {
-                text = text.replace(`<#${channelIdMatcher[1]}>`, channelName)
-            }
+        if(messageContent.match(/s!(enable|disable)/)) {
+            messageContent += ' ' + currentChannelName
         }
 
-        let listChannelMatcher = text.match(/s!list/)
-        let addChannelMatcher = text.match(/s!enable (\S+)/)
-        let removeChannelMatcher = text.match(/s!disable (\S+)/)
-        let aboutMatcher = text.match(/s!about/)
+        let listChannelMatcher = messageContent.match(/s!list/)
+        let addChannelMatcher = messageContent.match(/s!enable (\S+)/)
+        let removeChannelMatcher = messageContent.match(/s!disable (\S+)/)
+        let aboutMatcher = messageContent.match(/s!about/)
+        let helpMatcher = messageContent.match(/s!help/)
 
         if (listChannelMatcher) {
-            listChannels(msg, serverPreferences)
-        } else if(aboutMatcher) {
-            printAbout(msg)
+            return listChannels(listOfTextChannels, serverPreferences, onReply)
+        } else if (aboutMatcher) {
+            return printAbout(onReply)
         } else if (addChannelMatcher) {
-            addChannel(msg, addChannelMatcher, serverPreferences, serverId, isAdmin)
+            return addChannel(isAdmin, listOfTextChannels, addChannelMatcher, serverPreferences, serverId, onSavePreferences, onReply)
         } else if (removeChannelMatcher) {
-            removeChannel(msg, removeChannelMatcher, serverPreferences, serverId, isAdmin)
+            return removeChannel(isAdmin, listOfTextChannels, removeChannelMatcher, serverPreferences, serverId, onSavePreferences, onReply)
         } else {
-            printHelp(msg)
+            printHelp(onReply)
+            if(helpMatcher) {
+                return true
+            }
+            return false
         }
-        return
     }
 }
 
 /**
  * 
- * @param {Message} msg 
- * @param {Object} serverPreferences
  */
-function parseAnimeTitles(msg, serverPreferences) {
-    // Continue only if the poster is not a bot and the channel is 'anime-suggestions'
-    if (!msg.author.bot && serverPreferences.allowedChannels.includes(msg.channel.name)) {
+function parseAnimeTitles(messageContent, channelName, serverPreferences, onReply) {
+    if (serverPreferences.allowedChannels.includes(channelName)) {
 
-        // Raw message received converted to lower case
-        let text = msg.content.toLowerCase()
 
         // Regex that matches: italics, bold, striked, or quoted text
         let regex = /(\*{1,2}|\~{2}|\"|_|'|`)(.+?)\1/
@@ -390,10 +376,10 @@ function parseAnimeTitles(msg, serverPreferences) {
         let titles = []
 
         // Extract possible titles from the message
-        let matches = text.match(regex)
+        let matches = messageContent.match(regex)
         while (matches != null && matches.length >= 3) {
             titles.push(matches[2].trim())
-            text = text.replace(matches[0], '')
+            messageContent = messageContent.replace(matches[0], '')
             matches = text.match(regex)
         }
 
@@ -408,7 +394,7 @@ function parseAnimeTitles(msg, serverPreferences) {
                 mal.findAnime(anime.malId)
                     .then(info => {
                         // Post synopsis about this title
-                        postDesc(anime, info, msg)
+                        postDesc(anime, info, onReply)
                     })
                     .catch(err => console.log(err))
             }
@@ -421,11 +407,28 @@ function parseAnimeTitles(msg, serverPreferences) {
  * Executed whenever a message is posted to any channel on any server
  */
 client.on('message', msg => {
-    let serverId = msg.guild.id
-    let serverPreferences = getServerPreferences(serverId)
+    const serverId = msg.guild.id
+    const serverPreferences = getServerPreferences(serverId)
 
-    parseConfigurationCommands(msg, serverPreferences, serverId)
-    parseAnimeTitles(msg, serverPreferences)
+    if (!msg.author.bot) {
+        const messageContent = msg.content
+        const previousMessageContent = ''
+        const channelName = msg.channel.name
+        const isAdmin = msg.member.hasPermission('ADMINISTRATOR')
+        const listOfTextChannels = getListOfTextChannels(msg)
+
+        // Replace channel IDs by their names in commands
+        let channelIdMatcher = messageContent.match(/s!\w+ <#(\d+)>/)
+        if (channelIdMatcher) {
+            let otherChannelName = getNameOfChannelById(msg, channelIdMatcher[1])
+            if (otherChannelName) {
+                messageContent = messageContent.replace(`<#${channelIdMatcher[1]}>`, otherChannelName)
+            }
+        }
+
+        parseConfigurationCommands(isAdmin, messageContent, previousMessageContent, channelName, listOfTextChannels, serverPreferences, serverId, saveServerPreferences, (reply) => { msg.reply(reply) })
+        parseAnimeTitles(messageContent, channelName, serverPreferences, (reply, attachment) => { msg.channel.send(reply, attachment) })
+    }
 })
 
 // Authenticate this bot using its private key
@@ -434,5 +437,7 @@ client.login(JSON.parse(fs.readFileSync("token.json")).token)
 // Export functions for testing
 module.exports = {
     fuzzyMatch: fuzzyMatch,
-    createNewServerPreferences: createNewServerPreferences
+    createNewServerPreferences: createNewServerPreferences,
+    parseConfigurationCommands: parseConfigurationCommands,
+    parseAnimeTitles: parseAnimeTitles
 }
