@@ -380,7 +380,7 @@ function parseAnimeTitles(messageContent, channelName, serverPreferences, onRepl
         while (matches != null && matches.length >= 3) {
             titles.push(matches[2].trim())
             messageContent = messageContent.replace(matches[0], '')
-            matches = text.match(regex)
+            matches = messageContent.match(regex)
         }
 
         // For each possible title
