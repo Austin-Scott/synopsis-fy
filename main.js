@@ -4,6 +4,7 @@ const fs = require("fs")
 const Jikan = require('jikan-node')
 const mal = new Jikan()
 const lev = require('fast-levenshtein')
+const util = require('util')
 
 let model = loadOrCreateNewModel()
 
@@ -295,14 +296,36 @@ function removeChannel(msg, removeChannelMatcher, serverPreferences, serverId, i
  */
 function printHelp(msg) {
     msg.reply(
-        `***Synopsis-fy help:***
+        `***Command list:***
+**Usable by anyone:**
+Find closest match title for my previous message: \`s!match\`
+View synopsis response channel list: \`s!list\`
+View information about this bot: \`s!about\`
+Print this help dialog: \`s!help\`
+
+**Server admins only:**
+Enable synopsis responses in this channel: \`s!enable\`
+Disable synopsis responses in this channel: \`s!disable\`
+Enable synopsis responses in a specific channel: \`s!enable CHANNEL-NAME-HERE\`
+Disable synopsis responses in a specific channel: \`s!disable CHANNEL-NAME-HERE\``
+    )
+}
+
+/**
+ * 
+ * @param {Message} msg 
+ */
+function printAbout(msg) {
+    msg.reply(
+        `***About Synopsis-fy:***
 For all channels with synopsis reponses enabled this bot will respond to any anime title that is: *Italicized*, **Bolden**, __Underlined__, ~~Struckthrough~~, \`Code blocked\`, or "Quoted" with a synopsis of that anime from MyAnimeList.net
 
-**Command list:**
-Enable synopsis responses in a channel: \`s!enable CHANNEL-NAME-HERE\`
-Disable synopsis responses in a channel: \`s!disable CHANNEL-NAME-HERE\`
-View synopsis response channel list: \`s!list\`
-Print this help dialog: \`s!help\``
+*Please note that hentai titles will only be matched in NSFW channels. Also, to reduce spam, this bot will only match a particular title once per channel per 48 hours.*
+
+Created with ❤️ for the *UW-Stout An-Bu Club* by Austin Scott
+Add this bot to your own server: <https://discordapp.com/oauth2/authorize?&client_id=657318125989003323&scope=bot&permissions=8>
+Source code: <https://github.com/Austin-Scott/synopsis-fy>
+`
     )
 }
 
@@ -331,9 +354,12 @@ function parseConfigurationCommands(msg, serverPreferences, serverId) {
         let listChannelMatcher = text.match(/s!list/)
         let addChannelMatcher = text.match(/s!enable (\S+)/)
         let removeChannelMatcher = text.match(/s!disable (\S+)/)
+        let aboutMatcher = text.match(/s!about/)
 
         if (listChannelMatcher) {
             listChannels(msg, serverPreferences)
+        } else if(aboutMatcher) {
+            printAbout(msg)
         } else if (addChannelMatcher) {
             addChannel(msg, addChannelMatcher, serverPreferences, serverId, isAdmin)
         } else if (removeChannelMatcher) {
