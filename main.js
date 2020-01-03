@@ -184,7 +184,7 @@ function postDesc(anime, info, onReply) {
 
     if (info.rating && !info.rating.includes('Hentai')) {
         // This anime is SFW
-        onReply(`**${anime.title}**\n<${anime.malUrl}>\n${info.synopsis || '*No synopsis was found for this title*'}`, attachment)
+        onReply(`**${anime.title}**\n<${anime.malUrl}>\n>>> ${info.synopsis || '*No synopsis was found for this title*'}`, attachment)
     } else if (msg.channel.nsfw) {
         // The referenced anime is a hentai: add warning, remove thumbnail, and hide synopsis behind spoiler tag
         onReply(`**${anime.title}** - ***Warning:*** __**This is a 18+ Hentai**__\n||${info.synopsis || '*No synopsis was found for this title*'}||`)
