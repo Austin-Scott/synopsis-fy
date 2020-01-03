@@ -418,7 +418,7 @@ client.on('message', msg => {
     const serverPreferences = getServerPreferences(serverId)
 
     if (!msg.author.bot) {
-        const messageContent = msg.content
+        let messageContent = msg.content
         const previousMessageContent = ''
         const channelName = msg.channel.name
         const isAdmin = msg.member.hasPermission('ADMINISTRATOR')
