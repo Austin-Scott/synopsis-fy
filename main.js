@@ -174,6 +174,18 @@ function fuzzyMatch(text, serverPreferences) {
 }
 
 /**
+ * 
+ */
+function areEqual() {
+   var len = arguments.length
+   for (var i = 1; i< len; i++){
+      if (arguments[i] === null || arguments[i] !== arguments[i-1])
+         return false
+   }
+   return true
+}
+
+/**
  * Posts a synopsis to the channel where the information was requested
  * @param {Anime} anime Local metadata object about this anime
  * @param {Object} info Metadata directly pulled from MyAnimeList
@@ -182,12 +194,24 @@ function postDesc(anime, info, onReply) {
     // Thumbnail for this title
     const attachment = new Attachment(anime.picture)
 
+    let defaultTitle = anime.title
+    let englishTitle = info.title_english || anime.title
+    let japaneseTitle = info.title_japanese || anime.title
+
+    let title = ''
+
+    if(areEqual(defaultTitle.toLowerCase(), englishTitle.toLowerCase(), japaneseTitle.toLowerCase())) {
+        title = `**${defaultTitle}**`
+    } else {
+        title = `**${englishTitle}** • **${defaultTitle}** • **${japaneseTitle}**`
+    }
+
     if (info.rating && !info.rating.includes('Hentai')) {
         // This anime is SFW
-        onReply(`**${anime.title}**\n<${anime.malUrl}>\n>>> ${info.synopsis || '*No synopsis was found for this title*'}`, attachment)
+        onReply(`${title}\n<${anime.malUrl}>\n>>> ${info.synopsis || '*No synopsis was found for this title*'}`, attachment)
     } else if (msg.channel.nsfw) {
         // The referenced anime is a hentai: add warning, remove thumbnail, and hide synopsis behind spoiler tag
-        onReply(`**${anime.title}** - ***Warning:*** __**This is a 18+ Hentai**__\n||${info.synopsis || '*No synopsis was found for this title*'}||`)
+        onReply(`${title} - ***Warning:*** __**This is a 18+ Hentai**__\n||${info.synopsis || '*No synopsis was found for this title*'}||`)
     }
 }
 
@@ -221,8 +245,8 @@ function getNameOfChannelById(msg, id) {
 /**
  * 
  */
-function listChannels(listOfTextChannels, serverPreferences, onReply) {
-    let channelList = 'Synopsis response channel list:\n'
+function listChannels(listOfTextChannels, authorHandle, serverPreferences, onReply) {
+    let channelList = `${authorHandle}, Synopsis response channel list:\n`
     let activeChannelList = serverPreferences.allowedChannels
     listOfTextChannels.forEach(channel => {
         let isEnabled = activeChannelList.includes(channel)
@@ -235,7 +259,7 @@ function listChannels(listOfTextChannels, serverPreferences, onReply) {
 /**
  * 
  */
-function addChannel(isAdmin, listOfTextChannels, addChannelMatcher, serverPreferences, serverId, onSavePreferences, onReply) {
+function addChannel(isAdmin, authorHandle, listOfTextChannels, addChannelMatcher, serverPreferences, serverId, onSavePreferences, onReply) {
     if (isAdmin) {
         let channelName = addChannelMatcher[1]
 
@@ -243,18 +267,18 @@ function addChannel(isAdmin, listOfTextChannels, addChannelMatcher, serverPrefer
             if (!serverPreferences.allowedChannels.includes(channelName)) {
                 serverPreferences.allowedChannels.push(channelName)
                 onSavePreferences(serverId, serverPreferences)
-                onReply(`I will now respond to anime titles in "${channelName}" with their synopses`)
+                onReply(`${authorHandle}, I will now respond to anime titles in "${channelName}" with their synopses`)
                 return true
             } else {
-                onReply("That channel already had synopsis responses enabled")
+                onReply(`${authorHandle}, That channel already had synopsis responses enabled`)
                 return true
             }
         } else {
-            onReply(`I could not find "${channelName}" in the list of your text channels. Please try again.`)
+            onReply(`${authorHandle}, I could not find "${channelName}" in the list of your text channels. Please try again.`)
             return false
         }
     } else {
-        onReply("You must be an admin to perform that action")
+        onReply(`${authorHandle}, You must be an admin to perform that action`)
         return false
     }
 }
@@ -262,7 +286,7 @@ function addChannel(isAdmin, listOfTextChannels, addChannelMatcher, serverPrefer
 /**
  * 
  */
-function removeChannel(isAdmin, listOfTextChannels, removeChannelMatcher, serverPreferences, serverId, onSavePreferences, onReply) {
+function removeChannel(isAdmin, authorHandle, listOfTextChannels, removeChannelMatcher, serverPreferences, serverId, onSavePreferences, onReply) {
     if (isAdmin) {
         let channelName = removeChannelMatcher[1]
 
@@ -271,20 +295,20 @@ function removeChannel(isAdmin, listOfTextChannels, removeChannelMatcher, server
 
                 serverPreferences.allowedChannels = serverPreferences.allowedChannels.filter(channel => channelName != channel)
                 onSavePreferences(serverId, serverPreferences)
-                onReply(`You have successfully removed "${channelName}" from my active channel list`)
+                onReply(`${authorHandle}, You have successfully removed "${channelName}" from my active channel list`)
                 return true
             } else {
-                onReply('Synopsis responses for that channel were already disabled')
+                onReply(`${authorHandle}, Synopsis responses for that channel were already disabled`)
                 return true
             }
         } else {
-            onReply(`I could not find "${channelName}" in the list of your text channels. Please try again.`)
+            onReply(`${authorHandle}, I could not find "${channelName}" in the list of your text channels. Please try again.`)
             return false
         }
 
 
     } else {
-        onReply("You must be an admin to perform that action")
+        onReply(`${authorHandle}, You must be an admin to perform that action`)
         return false
     }
 }
@@ -292,9 +316,9 @@ function removeChannel(isAdmin, listOfTextChannels, removeChannelMatcher, server
 /**
  * 
  */
-function printHelp(onReply) {
+function printHelp(helpRequested, command, authorHandle, onReply) {
     onReply(
-        `***Command list:***
+        `${authorHandle}, ${helpRequested ? '' : `"${command}" *is not a valid command. Please try again.*\n`}***Command list:***
 **Usable by anyone:**
 Find closest match title for my previous message: \`s!match\`
 View synopsis response channel list: \`s!list\`
@@ -312,9 +336,9 @@ Disable synopsis responses in a specific channel: \`s!disable CHANNEL-NAME-HERE\
 /**
  * 
  */
-function printAbout(onReply) {
+function printAbout(authorHandle, onReply) {
     onReply(
-        `***About Synopsis-fy:***
+        `${authorHandle}, ***About Synopsis-fy:***
 For all channels with synopsis reponses enabled this bot will respond to any anime title that is: *Italicized*, **Bolden**, __Underlined__, ~~Struckthrough~~, \`Code blocked\`, or "Quoted" with a synopsis of that anime from MyAnimeList.net
 
 *Please note that hentai titles will only be matched in NSFW channels. Also, to reduce spam, this bot will only match a particular title once per channel per 48 hours.*
@@ -330,7 +354,7 @@ Source code: <https://github.com/Austin-Scott/synopsis-fy>
 /**
  * 
  */
-function parseConfigurationCommands(isAdmin, messageContent, previousMessageContent, currentChannelName, listOfTextChannels, serverPreferences, serverId, onSavePreferences, onReply) {
+function parseConfigurationCommands(isAdmin, authorHandle, messageContent, previousMessageContent, currentChannelName, listOfTextChannels, serverPreferences, serverId, onSavePreferences, onReply) {
 
     if (messageContent.startsWith('s!')) {
 
@@ -345,19 +369,20 @@ function parseConfigurationCommands(isAdmin, messageContent, previousMessageCont
         let helpMatcher = messageContent.match(/s!help/)
 
         if (listChannelMatcher) {
-            return listChannels(listOfTextChannels, serverPreferences, onReply)
+            return listChannels(listOfTextChannels, authorHandle, serverPreferences, onReply)
         } else if (aboutMatcher) {
-            return printAbout(onReply)
+            return printAbout(authorHandle, onReply)
         } else if (addChannelMatcher) {
-            return addChannel(isAdmin, listOfTextChannels, addChannelMatcher, serverPreferences, serverId, onSavePreferences, onReply)
+            return addChannel(isAdmin, authorHandle, listOfTextChannels, addChannelMatcher, serverPreferences, serverId, onSavePreferences, onReply)
         } else if (removeChannelMatcher) {
-            return removeChannel(isAdmin, listOfTextChannels, removeChannelMatcher, serverPreferences, serverId, onSavePreferences, onReply)
+            return removeChannel(isAdmin, authorHandle, listOfTextChannels, removeChannelMatcher, serverPreferences, serverId, onSavePreferences, onReply)
         } else {
-            printHelp(onReply)
+            let helpRequested = false
             if (helpMatcher) {
-                return true
+                helpRequested = true
             }
-            return false
+            printHelp(helpRequested, messageContent, authorHandle, onReply)
+            return helpRequested
         }
     }
 }
@@ -422,6 +447,7 @@ client.on('message', msg => {
         const previousMessageContent = ''
         const channelName = msg.channel.name
         const isAdmin = msg.member.hasPermission('ADMINISTRATOR')
+        const authorHandle = `<@!${msg.author.id}>`
         const listOfTextChannels = getListOfTextChannels(msg)
 
         // Replace channel IDs by their names in commands
@@ -433,7 +459,7 @@ client.on('message', msg => {
             }
         }
 
-        parseConfigurationCommands(isAdmin, messageContent, previousMessageContent, channelName, listOfTextChannels, serverPreferences, serverId, saveServerPreferences, (reply) => { msg.reply(reply) })
+        parseConfigurationCommands(isAdmin, authorHandle, messageContent, previousMessageContent, channelName, listOfTextChannels, serverPreferences, serverId, saveServerPreferences, (reply, attachment) => { msg.channel.send(reply, attachment) })
         parseAnimeTitles(messageContent, channelName, serverPreferences, getSynopsisFromMAL, postDesc, (reply, attachment) => { msg.channel.send(reply, attachment) })
     }
 })

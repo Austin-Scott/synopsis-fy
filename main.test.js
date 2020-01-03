@@ -22,6 +22,7 @@ describe('parseConfigurationCommands function', () => {
         expect(
             parseConfigurationCommands(
                 true,
+                'username',
                 's!help',
                 '',
                 '',
@@ -39,6 +40,7 @@ describe('parseConfigurationCommands function', () => {
         expect(
             parseConfigurationCommands(
                 false,
+                'username',
                 's!help',
                 '',
                 '',
@@ -58,6 +60,7 @@ describe('parseConfigurationCommands function', () => {
         expect(
             parseConfigurationCommands(
                 true,
+                'username',
                 's!NotACommand',
                 '',
                 '',
@@ -75,6 +78,7 @@ describe('parseConfigurationCommands function', () => {
         expect(
             parseConfigurationCommands(
                 false,
+                'username',
                 's!ThisDoesNotExist',
                 '',
                 '',
@@ -94,6 +98,7 @@ describe('parseConfigurationCommands function', () => {
         expect(
             parseConfigurationCommands(
                 true,
+                'username',
                 'Howdy partner',
                 '',
                 '',
@@ -111,6 +116,7 @@ describe('parseConfigurationCommands function', () => {
         expect(
             parseConfigurationCommands(
                 false,
+                'username',
                 'This does not contain any sort of command',
                 '',
                 '',
@@ -130,6 +136,7 @@ describe('parseConfigurationCommands function', () => {
         expect(
             parseConfigurationCommands(
                 false,
+                'username',
                 's!list',
                 '',
                 '',
@@ -151,6 +158,7 @@ describe('parseConfigurationCommands function', () => {
         expect(
             parseConfigurationCommands(
                 true,
+                'username',
                 's!about',
                 '',
                 '',
@@ -168,6 +176,7 @@ describe('parseConfigurationCommands function', () => {
         expect(
             parseConfigurationCommands(
                 false,
+                'username',
                 's!about',
                 '',
                 '',
@@ -188,6 +197,7 @@ describe('parseConfigurationCommands function', () => {
         expect(
             parseConfigurationCommands(
                 true,
+                'username',
                 's!enable',
                 '',
                 mockChannels[0],
@@ -210,6 +220,7 @@ describe('parseConfigurationCommands function', () => {
         expect(
             parseConfigurationCommands(
                 true,
+                'username',
                 's!disable',
                 '',
                 mockChannels[1],
@@ -232,6 +243,7 @@ describe('parseConfigurationCommands function', () => {
         expect(
             parseConfigurationCommands(
                 true,
+                'username',
                 's!enable ' + mockChannels[0],
                 '',
                 mockChannels[1],
@@ -254,6 +266,7 @@ describe('parseConfigurationCommands function', () => {
         expect(
             parseConfigurationCommands(
                 true,
+                'username',
                 's!disable ' + mockChannels[1],
                 '',
                 mockChannels[0],
