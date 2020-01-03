@@ -22,6 +22,7 @@ describe('parseConfigurationCommands function', () => {
         expect(
             parseConfigurationCommands(
                 true,
+                false,
                 'username',
                 's!help',
                 '',
@@ -39,6 +40,7 @@ describe('parseConfigurationCommands function', () => {
         ).toBe(true)
         expect(
             parseConfigurationCommands(
+                false,
                 false,
                 'username',
                 's!help',
@@ -60,6 +62,7 @@ describe('parseConfigurationCommands function', () => {
         expect(
             parseConfigurationCommands(
                 true,
+                false,
                 'username',
                 's!NotACommand',
                 '',
@@ -77,6 +80,7 @@ describe('parseConfigurationCommands function', () => {
         ).toBe(false)
         expect(
             parseConfigurationCommands(
+                false,
                 false,
                 'username',
                 's!ThisDoesNotExist',
@@ -98,6 +102,7 @@ describe('parseConfigurationCommands function', () => {
         expect(
             parseConfigurationCommands(
                 true,
+                false,
                 'username',
                 'Howdy partner',
                 '',
@@ -115,6 +120,7 @@ describe('parseConfigurationCommands function', () => {
         ).toBe(undefined)
         expect(
             parseConfigurationCommands(
+                false,
                 false,
                 'username',
                 'This does not contain any sort of command',
@@ -135,6 +141,7 @@ describe('parseConfigurationCommands function', () => {
     it('should list all channel names when requested', () => {
         expect(
             parseConfigurationCommands(
+                false,
                 false,
                 'username',
                 's!list',
@@ -158,6 +165,7 @@ describe('parseConfigurationCommands function', () => {
         expect(
             parseConfigurationCommands(
                 true,
+                false,
                 'username',
                 's!about',
                 '',
@@ -175,6 +183,7 @@ describe('parseConfigurationCommands function', () => {
         ).toBe(true)
         expect(
             parseConfigurationCommands(
+                false,
                 false,
                 'username',
                 's!about',
@@ -197,6 +206,7 @@ describe('parseConfigurationCommands function', () => {
         expect(
             parseConfigurationCommands(
                 true,
+                false,
                 'username',
                 's!enable',
                 '',
@@ -220,6 +230,7 @@ describe('parseConfigurationCommands function', () => {
         expect(
             parseConfigurationCommands(
                 true,
+                false,
                 'username',
                 's!disable',
                 '',
@@ -243,6 +254,7 @@ describe('parseConfigurationCommands function', () => {
         expect(
             parseConfigurationCommands(
                 true,
+                false,
                 'username',
                 's!enable ' + mockChannels[0],
                 '',
@@ -266,6 +278,7 @@ describe('parseConfigurationCommands function', () => {
         expect(
             parseConfigurationCommands(
                 true,
+                false,
                 'username',
                 's!disable ' + mockChannels[1],
                 '',
@@ -284,20 +297,42 @@ describe('parseConfigurationCommands function', () => {
         ).toBe(true)
         expect(saveFlag).toBe(true)
     })
+    it('should match a previous message if requested', () => {
+        expect(
+            parseConfigurationCommands(
+                true,
+                false,
+                'username',
+                's!match',
+                'Should only match when forced: "Sword Art Online Do not Match"',
+                mockChannels[1],
+                mockChannels,
+                createNewServerPreferences(),
+                'server ID',
+                (serverId, preferences) => {
+                    expect(false).toBe(true) // Fail test
+                },
+                (reply) => {
+
+                }
+            )
+        ).toBe(true)
+    })
 })
 
 describe('parseAnimeTitles function', () => {
     it('should match quoted titles', () => {
         let callbackFlag = false
         parseAnimeTitles(
+            false,
             'Here is a message containing a quoted anime title "Anime Title"',
             mockChannels[1],
             createNewServerPreferences(),
-            (title, serverPreferences, onSuccess, onReply) => {
+            (allowNSFW, title, serverPreferences, onSuccess, onReply) => {
                 expect(title == 'Anime Title').toBe(true)
                 callbackFlag = true
             },
-            (anime, info, onReply) => {
+            (anime, info, allowNSFW, onReply) => {
 
             },
             (reply, attachment) => {
@@ -309,14 +344,15 @@ describe('parseAnimeTitles function', () => {
     it('should match bolded titles', () => {
         let callbackFlag = false
         parseAnimeTitles(
+            false,
             'Here is a message containing a quoted anime title **Anime Title**',
             mockChannels[1],
             createNewServerPreferences(),
-            (title, serverPreferences, onSuccess, onReply) => {
+            (allowNSFW, title, serverPreferences, onSuccess, onReply) => {
                 expect(title == 'Anime Title').toBe(true)
                 callbackFlag = true
             },
-            (anime, info, onReply) => {
+            (anime, info, allowNSFW, onReply) => {
 
             },
             (reply, attachment) => {
@@ -328,14 +364,15 @@ describe('parseAnimeTitles function', () => {
     it('should match italicized titles', () => {
         let callbackFlag = false
         parseAnimeTitles(
+            false,
             'Here is a message containing a quoted anime title *Anime Title*',
             mockChannels[1],
             createNewServerPreferences(),
-            (title, serverPreferences, onSuccess, onReply) => {
+            (allowNSFW, title, serverPreferences, onSuccess, onReply) => {
                 expect(title == 'Anime Title').toBe(true)
                 callbackFlag = true
             },
-            (anime, info, onReply) => {
+            (anime, info, allowNSFW, onReply) => {
 
             },
             (reply, attachment) => {
@@ -347,14 +384,15 @@ describe('parseAnimeTitles function', () => {
     it('should match underline style italicized titles', () => {
         let callbackFlag = false
         parseAnimeTitles(
+            false,
             'Here is a message containing a quoted anime title _Anime Title_',
             mockChannels[1],
             createNewServerPreferences(),
-            (title, serverPreferences, onSuccess, onReply) => {
+            (allowNSFW, title, serverPreferences, onSuccess, onReply) => {
                 expect(title == 'Anime Title').toBe(true)
                 callbackFlag = true
             },
-            (anime, info, onReply) => {
+            (anime, info, allowNSFW, onReply) => {
 
             },
             (reply, attachment) => {
@@ -366,14 +404,15 @@ describe('parseAnimeTitles function', () => {
     it('should match underlined titles', () => {
         let callbackFlag = false
         parseAnimeTitles(
+            false,
             'Here is a message containing a quoted anime title __Anime Title__',
             mockChannels[1],
             createNewServerPreferences(),
-            (title, serverPreferences, onSuccess, onReply) => {
+            (allowNSFW, title, serverPreferences, onSuccess, onReply) => {
                 expect(title == 'Anime Title').toBe(true)
                 callbackFlag = true
             },
-            (anime, info, onReply) => {
+            (anime, info, allowNSFW, onReply) => {
 
             },
             (reply, attachment) => {
@@ -385,14 +424,15 @@ describe('parseAnimeTitles function', () => {
     it('should match struckthrough titles', () => {
         let callbackFlag = false
         parseAnimeTitles(
+            false,
             'Here is a message containing a quoted anime title ~~Anime Title~~',
             mockChannels[1],
             createNewServerPreferences(),
-            (title, serverPreferences, onSuccess, onReply) => {
+            (allowNSFW, title, serverPreferences, onSuccess, onReply) => {
                 expect(title == 'Anime Title').toBe(true)
                 callbackFlag = true
             },
-            (anime, info, onReply) => {
+            (anime, info, allowNSFW, onReply) => {
 
             },
             (reply, attachment) => {
@@ -404,14 +444,15 @@ describe('parseAnimeTitles function', () => {
     it('should match code blocked titles', () => {
         let callbackFlag = false
         parseAnimeTitles(
+            false,
             'Here is a message containing a quoted anime title `Anime Title`',
             mockChannels[1],
             createNewServerPreferences(),
-            (title, serverPreferences, onSuccess, onReply) => {
+            (allowNSFW, title, serverPreferences, onSuccess, onReply) => {
                 expect(title == 'Anime Title').toBe(true)
                 callbackFlag = true
             },
-            (anime, info, onReply) => {
+            (anime, info, allowNSFW, onReply) => {
 
             },
             (reply, attachment) => {
@@ -423,14 +464,15 @@ describe('parseAnimeTitles function', () => {
     it('should match single quote titles', () => {
         let callbackFlag = false
         parseAnimeTitles(
+            false,
             `Here is a message containing a quoted anime title 'Anime Title'`,
             mockChannels[1],
             createNewServerPreferences(),
-            (title, serverPreferences, onSuccess, onReply) => {
+            (allowNSFW, title, serverPreferences, onSuccess, onReply) => {
                 expect(title == 'Anime Title').toBe(true)
                 callbackFlag = true
             },
-            (anime, info, onReply) => {
+            (anime, info, allowNSFW, onReply) => {
 
             },
             (reply, attachment) => {
@@ -446,13 +488,14 @@ describe('parseAnimeTitles function', () => {
             'Title Three'
         ]
         parseAnimeTitles(
+            false,
             'Here is a message with multiple titles. *Title One*, _Title Two_, and **Title Three**',
             mockChannels[1],
             createNewServerPreferences(),
-            (title, serverPreferences, onSuccess, onReply) => {
+            (allowNSFW, title, serverPreferences, onSuccess, onReply) => {
                 titles = titles.filter(value => { return value != title })
             },
-            (anime, info, onReply) => {
+            (anime, info, allowNSFW, onReply) => {
 
             },
             (reply, attachment) => {
@@ -463,13 +506,14 @@ describe('parseAnimeTitles function', () => {
     })
     it('should match nothing when given no titles', () => {
         parseAnimeTitles(
+            false,
             'This message does not contain any messages but it does have tricky symbols ` * ~ " ',
             mockChannels[1],
             createNewServerPreferences(),
             (title, serverPreferences, onSuccess, onReply) => {
                 expect(false).toBe(true) // Fail test
             },
-            (anime, info, onReply) => {
+            (anime, info, allowNSFW, onReply) => {
 
             },
             (reply, attachment) => {

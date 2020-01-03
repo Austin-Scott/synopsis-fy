@@ -177,12 +177,12 @@ function fuzzyMatch(text, serverPreferences) {
  * 
  */
 function areEqual() {
-   var len = arguments.length
-   for (var i = 1; i< len; i++){
-      if (arguments[i] === null || arguments[i] !== arguments[i-1])
-         return false
-   }
-   return true
+    var len = arguments.length
+    for (var i = 1; i < len; i++) {
+        if (arguments[i] === null || arguments[i] !== arguments[i - 1])
+            return false
+    }
+    return true
 }
 
 /**
@@ -190,7 +190,7 @@ function areEqual() {
  * @param {Anime} anime Local metadata object about this anime
  * @param {Object} info Metadata directly pulled from MyAnimeList
  */
-function postDesc(anime, info, onReply) {
+function postDesc(anime, info, allowNSFW, onReply) {
     // Thumbnail for this title
     const attachment = new Attachment(anime.picture)
 
@@ -200,7 +200,7 @@ function postDesc(anime, info, onReply) {
 
     let title = ''
 
-    if(areEqual(defaultTitle.toLowerCase(), englishTitle.toLowerCase(), japaneseTitle.toLowerCase())) {
+    if (areEqual(defaultTitle.toLowerCase(), englishTitle.toLowerCase(), japaneseTitle.toLowerCase())) {
         title = `**${defaultTitle}**`
     } else {
         title = `**${englishTitle}** • **${defaultTitle}** • **${japaneseTitle}**`
@@ -209,7 +209,7 @@ function postDesc(anime, info, onReply) {
     if (info.rating && !info.rating.includes('Hentai')) {
         // This anime is SFW
         onReply(`${title}\n<${anime.malUrl}>\n>>> ${info.synopsis || '*No synopsis was found for this title*'}`, attachment)
-    } else if (msg.channel.nsfw) {
+    } else if (allowNSFW) {
         // The referenced anime is a hentai: add warning, remove thumbnail, and hide synopsis behind spoiler tag
         onReply(`${title} - ***Warning:*** __**This is a 18+ Hentai**__\n||${info.synopsis || '*No synopsis was found for this title*'}||`)
     }
@@ -341,7 +341,7 @@ function printAbout(authorHandle, onReply) {
         `${authorHandle}, ***About Synopsis-fy:***
 For all channels with synopsis reponses enabled this bot will respond to any anime title that is: *Italicized*, **Bolden**, __Underlined__, ~~Struckthrough~~, \`Code blocked\`, or "Quoted" with a synopsis of that anime from MyAnimeList.net
 
-*Please note that hentai titles will only be matched in NSFW channels. Also, to reduce spam, this bot will only match a particular title once per channel per 48 hours.*
+*Please note that hentai titles will only be matched in NSFW channels.*
 
 Created with ❤️ for the *UW-Stout An-Bu Club* by Austin Scott
 Add this bot to your own server: <https://discordapp.com/oauth2/authorize?&client_id=657318125989003323&scope=bot&permissions=8>
@@ -354,19 +354,20 @@ Source code: <https://github.com/Austin-Scott/synopsis-fy>
 /**
  * 
  */
-function parseConfigurationCommands(isAdmin, authorHandle, messageContent, previousMessageContent, currentChannelName, listOfTextChannels, serverPreferences, serverId, onSavePreferences, onReply) {
+function parseConfigurationCommands(isAdmin, allowNSFW, authorHandle, messageContent, previousMessageContent, currentChannelName, listOfTextChannels, serverPreferences, serverId, onSavePreferences, onReply) {
 
     if (messageContent.startsWith('s!')) {
 
-        if (messageContent.match(/s!(enable|disable)/)) {
+        if (messageContent.match(/^s!(enable|disable)$/)) {
             messageContent += ' ' + currentChannelName
         }
 
-        let listChannelMatcher = messageContent.match(/s!list/)
-        let addChannelMatcher = messageContent.match(/s!enable (\S+)/)
-        let removeChannelMatcher = messageContent.match(/s!disable (\S+)/)
-        let aboutMatcher = messageContent.match(/s!about/)
-        let helpMatcher = messageContent.match(/s!help/)
+        let listChannelMatcher = messageContent.match(/^s!list$/)
+        let matchMessageMatcher = messageContent.match(/^s!match$/)
+        let addChannelMatcher = messageContent.match(/^s!enable (\S+)$/)
+        let removeChannelMatcher = messageContent.match(/^s!disable (\S+)$/)
+        let aboutMatcher = messageContent.match(/^s!about$/)
+        let helpMatcher = messageContent.match(/^s!help$/)
 
         if (listChannelMatcher) {
             return listChannels(listOfTextChannels, authorHandle, serverPreferences, onReply)
@@ -374,6 +375,11 @@ function parseConfigurationCommands(isAdmin, authorHandle, messageContent, previ
             return printAbout(authorHandle, onReply)
         } else if (addChannelMatcher) {
             return addChannel(isAdmin, authorHandle, listOfTextChannels, addChannelMatcher, serverPreferences, serverId, onSavePreferences, onReply)
+        } else if (matchMessageMatcher) {
+            let tempServerPref = Object.assign({}, serverPreferences)
+            tempServerPref.maximumStringMatchDistance = Number.MAX_SAFE_INTEGER
+            parseAnimeTitles(allowNSFW, previousMessageContent, currentChannelName, tempServerPref, getSynopsisFromMAL, postDesc, onReply)
+            return true
         } else if (removeChannelMatcher) {
             return removeChannel(isAdmin, authorHandle, listOfTextChannels, removeChannelMatcher, serverPreferences, serverId, onSavePreferences, onReply)
         } else {
@@ -390,7 +396,7 @@ function parseConfigurationCommands(isAdmin, authorHandle, messageContent, previ
 /**
  * 
  */
-function getSynopsisFromMAL(title, serverPreferences, onSuccess, onReply) {
+function getSynopsisFromMAL(allowNSFW, title, serverPreferences, onSuccess, onReply) {
     // Try to match the title
     let anime = fuzzyMatch(title, serverPreferences)
 
@@ -400,7 +406,7 @@ function getSynopsisFromMAL(title, serverPreferences, onSuccess, onReply) {
         mal.findAnime(anime.malId)
             .then(info => {
                 // Post synopsis about this title
-                onSuccess(anime, info, onReply)
+                onSuccess(anime, info, allowNSFW, onReply)
             })
             .catch(err => console.log(err))
     }
@@ -409,7 +415,7 @@ function getSynopsisFromMAL(title, serverPreferences, onSuccess, onReply) {
 /**
  * 
  */
-function parseAnimeTitles(messageContent, channelName, serverPreferences, onTitle, onSuccess, onReply) {
+function parseAnimeTitles(allowNSFW, messageContent, channelName, serverPreferences, onTitle, onSuccess, onReply) {
     if (serverPreferences.allowedChannels.includes(channelName)) {
 
 
@@ -429,26 +435,55 @@ function parseAnimeTitles(messageContent, channelName, serverPreferences, onTitl
 
         // For each possible title
         titles.forEach(title => {
-            onTitle(title, serverPreferences, onSuccess, onReply)
+            onTitle(allowNSFW, title, serverPreferences, onSuccess, onReply)
         })
 
     }
 }
 
 /**
+ * 
+ */
+function getPreviousMessage(channel, user) {
+    return new Promise((resolve, reject) => {
+        channel.fetchMessages()
+            .then(messages => {
+                let skippedFirst = false
+                messages.forEach(message => {
+                    if (message.author.id == user.id) {
+                        if (skippedFirst) {
+                            resolve(message)
+                            return
+                        } else {
+                            skippedFirst = true
+                        }
+                    }
+                })
+            })
+            .catch(err => { reject(err) })
+    })
+}
+
+/**
  * Executed whenever a message is posted to any channel on any server
  */
-client.on('message', msg => {
+client.on('message', async (msg) => {
     const serverId = msg.guild.id
     const serverPreferences = getServerPreferences(serverId)
 
     if (!msg.author.bot) {
         let messageContent = msg.content
-        const previousMessageContent = ''
+        let previousMessageContent = ''
+        try {
+            previousMessageContent = (await getPreviousMessage(msg.channel, msg.author)).content
+        } catch (err) {
+            console.log(err)
+        }
         const channelName = msg.channel.name
         const isAdmin = msg.member.hasPermission('ADMINISTRATOR')
         const authorHandle = `<@!${msg.author.id}>`
         const listOfTextChannels = getListOfTextChannels(msg)
+        const allowNSFW = msg.channel.nsfw
 
         // Replace channel IDs by their names in commands
         let channelIdMatcher = messageContent.match(/s!\w+ <#(\d+)>/)
@@ -459,8 +494,8 @@ client.on('message', msg => {
             }
         }
 
-        parseConfigurationCommands(isAdmin, authorHandle, messageContent, previousMessageContent, channelName, listOfTextChannels, serverPreferences, serverId, saveServerPreferences, (reply, attachment) => { msg.channel.send(reply, attachment) })
-        parseAnimeTitles(messageContent, channelName, serverPreferences, getSynopsisFromMAL, postDesc, (reply, attachment) => { msg.channel.send(reply, attachment) })
+        parseConfigurationCommands(isAdmin, allowNSFW, authorHandle, messageContent, previousMessageContent, channelName, listOfTextChannels, serverPreferences, serverId, saveServerPreferences, (reply, attachment) => { msg.channel.send(reply, attachment) })
+        parseAnimeTitles(allowNSFW, messageContent, channelName, serverPreferences, getSynopsisFromMAL, postDesc, (reply, attachment) => { msg.channel.send(reply, attachment) })
     }
 })
 
