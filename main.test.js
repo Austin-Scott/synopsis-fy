@@ -280,7 +280,7 @@ describe('parseAnimeTitles function', () => {
             'Here is a message containing a quoted anime title "Anime Title"',
             mockChannels[1],
             createNewServerPreferences(),
-            (title, onSuccess, onReply) => {
+            (title, serverPreferences, onSuccess, onReply) => {
                 expect(title == 'Anime Title').toBe(true)
                 callbackFlag = true
             },
@@ -299,7 +299,7 @@ describe('parseAnimeTitles function', () => {
             'Here is a message containing a quoted anime title **Anime Title**',
             mockChannels[1],
             createNewServerPreferences(),
-            (title, onSuccess, onReply) => {
+            (title, serverPreferences, onSuccess, onReply) => {
                 expect(title == 'Anime Title').toBe(true)
                 callbackFlag = true
             },
@@ -318,7 +318,7 @@ describe('parseAnimeTitles function', () => {
             'Here is a message containing a quoted anime title *Anime Title*',
             mockChannels[1],
             createNewServerPreferences(),
-            (title, onSuccess, onReply) => {
+            (title, serverPreferences, onSuccess, onReply) => {
                 expect(title == 'Anime Title').toBe(true)
                 callbackFlag = true
             },
@@ -337,7 +337,7 @@ describe('parseAnimeTitles function', () => {
             'Here is a message containing a quoted anime title _Anime Title_',
             mockChannels[1],
             createNewServerPreferences(),
-            (title, onSuccess, onReply) => {
+            (title, serverPreferences, onSuccess, onReply) => {
                 expect(title == 'Anime Title').toBe(true)
                 callbackFlag = true
             },
@@ -356,7 +356,7 @@ describe('parseAnimeTitles function', () => {
             'Here is a message containing a quoted anime title __Anime Title__',
             mockChannels[1],
             createNewServerPreferences(),
-            (title, onSuccess, onReply) => {
+            (title, serverPreferences, onSuccess, onReply) => {
                 expect(title == 'Anime Title').toBe(true)
                 callbackFlag = true
             },
@@ -375,7 +375,7 @@ describe('parseAnimeTitles function', () => {
             'Here is a message containing a quoted anime title ~~Anime Title~~',
             mockChannels[1],
             createNewServerPreferences(),
-            (title, onSuccess, onReply) => {
+            (title, serverPreferences, onSuccess, onReply) => {
                 expect(title == 'Anime Title').toBe(true)
                 callbackFlag = true
             },
@@ -394,7 +394,7 @@ describe('parseAnimeTitles function', () => {
             'Here is a message containing a quoted anime title `Anime Title`',
             mockChannels[1],
             createNewServerPreferences(),
-            (title, onSuccess, onReply) => {
+            (title, serverPreferences, onSuccess, onReply) => {
                 expect(title == 'Anime Title').toBe(true)
                 callbackFlag = true
             },
@@ -413,7 +413,7 @@ describe('parseAnimeTitles function', () => {
             `Here is a message containing a quoted anime title 'Anime Title'`,
             mockChannels[1],
             createNewServerPreferences(),
-            (title, onSuccess, onReply) => {
+            (title, serverPreferences, onSuccess, onReply) => {
                 expect(title == 'Anime Title').toBe(true)
                 callbackFlag = true
             },
@@ -436,7 +436,7 @@ describe('parseAnimeTitles function', () => {
             'Here is a message with multiple titles. *Title One*, _Title Two_, and **Title Three**',
             mockChannels[1],
             createNewServerPreferences(),
-            (title, onSuccess, onReply) => {
+            (title, serverPreferences, onSuccess, onReply) => {
                 titles = titles.filter(value => { return value != title })
             },
             (anime, info, onReply) => {
@@ -453,7 +453,7 @@ describe('parseAnimeTitles function', () => {
             'This message does not contain any messages but it does have tricky symbols ` * ~ " ',
             mockChannels[1],
             createNewServerPreferences(),
-            (title, onSuccess, onReply) => {
+            (title, serverPreferences, onSuccess, onReply) => {
                 expect(false).toBe(true) // Fail test
             },
             (anime, info, onReply) => {

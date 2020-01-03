@@ -365,7 +365,7 @@ function parseConfigurationCommands(isAdmin, messageContent, previousMessageCont
 /**
  * 
  */
-function getSynopsisFromMAL(title, onSuccess, onReply) {
+function getSynopsisFromMAL(title, serverPreferences, onSuccess, onReply) {
     // Try to match the title
     let anime = fuzzyMatch(title, serverPreferences)
 
@@ -404,7 +404,7 @@ function parseAnimeTitles(messageContent, channelName, serverPreferences, onTitl
 
         // For each possible title
         titles.forEach(title => {
-            onTitle(title, onSuccess, onReply)
+            onTitle(title, serverPreferences, onSuccess, onReply)
         })
 
     }
