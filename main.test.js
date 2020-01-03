@@ -273,6 +273,199 @@ describe('parseConfigurationCommands function', () => {
     })
 })
 
+describe('parseAnimeTitles function', () => {
+    it('should match quoted titles', () => {
+        let callbackFlag = false
+        parseAnimeTitles(
+            'Here is a message containing a quoted anime title "Anime Title"',
+            mockChannels[1],
+            createNewServerPreferences(),
+            (title, onSuccess, onReply) => {
+                expect(title == 'Anime Title').toBe(true)
+                callbackFlag = true
+            },
+            (anime, info, onReply) => {
+
+            },
+            (reply, attachment) => {
+
+            }
+        )
+        expect(callbackFlag).toBe(true)
+    })
+    it('should match bolded titles', () => {
+        let callbackFlag = false
+        parseAnimeTitles(
+            'Here is a message containing a quoted anime title **Anime Title**',
+            mockChannels[1],
+            createNewServerPreferences(),
+            (title, onSuccess, onReply) => {
+                expect(title == 'Anime Title').toBe(true)
+                callbackFlag = true
+            },
+            (anime, info, onReply) => {
+
+            },
+            (reply, attachment) => {
+
+            }
+        )
+        expect(callbackFlag).toBe(true)
+    })
+    it('should match italicized titles', () => {
+        let callbackFlag = false
+        parseAnimeTitles(
+            'Here is a message containing a quoted anime title *Anime Title*',
+            mockChannels[1],
+            createNewServerPreferences(),
+            (title, onSuccess, onReply) => {
+                expect(title == 'Anime Title').toBe(true)
+                callbackFlag = true
+            },
+            (anime, info, onReply) => {
+
+            },
+            (reply, attachment) => {
+
+            }
+        )
+        expect(callbackFlag).toBe(true)
+    })
+    it('should match underline style italicized titles', () => {
+        let callbackFlag = false
+        parseAnimeTitles(
+            'Here is a message containing a quoted anime title _Anime Title_',
+            mockChannels[1],
+            createNewServerPreferences(),
+            (title, onSuccess, onReply) => {
+                expect(title == 'Anime Title').toBe(true)
+                callbackFlag = true
+            },
+            (anime, info, onReply) => {
+
+            },
+            (reply, attachment) => {
+
+            }
+        )
+        expect(callbackFlag).toBe(true)
+    })
+    it('should match underlined titles', () => {
+        let callbackFlag = false
+        parseAnimeTitles(
+            'Here is a message containing a quoted anime title __Anime Title__',
+            mockChannels[1],
+            createNewServerPreferences(),
+            (title, onSuccess, onReply) => {
+                expect(title == 'Anime Title').toBe(true)
+                callbackFlag = true
+            },
+            (anime, info, onReply) => {
+
+            },
+            (reply, attachment) => {
+
+            }
+        )
+        expect(callbackFlag).toBe(true)
+    })
+    it('should match struckthrough titles', () => {
+        let callbackFlag = false
+        parseAnimeTitles(
+            'Here is a message containing a quoted anime title ~~Anime Title~~',
+            mockChannels[1],
+            createNewServerPreferences(),
+            (title, onSuccess, onReply) => {
+                expect(title == 'Anime Title').toBe(true)
+                callbackFlag = true
+            },
+            (anime, info, onReply) => {
+
+            },
+            (reply, attachment) => {
+
+            }
+        )
+        expect(callbackFlag).toBe(true)
+    })
+    it('should match code blocked titles', () => {
+        let callbackFlag = false
+        parseAnimeTitles(
+            'Here is a message containing a quoted anime title `Anime Title`',
+            mockChannels[1],
+            createNewServerPreferences(),
+            (title, onSuccess, onReply) => {
+                expect(title == 'Anime Title').toBe(true)
+                callbackFlag = true
+            },
+            (anime, info, onReply) => {
+
+            },
+            (reply, attachment) => {
+
+            }
+        )
+        expect(callbackFlag).toBe(true)
+    })
+    it('should match single quote titles', () => {
+        let callbackFlag = false
+        parseAnimeTitles(
+            `Here is a message containing a quoted anime title 'Anime Title'`,
+            mockChannels[1],
+            createNewServerPreferences(),
+            (title, onSuccess, onReply) => {
+                expect(title == 'Anime Title').toBe(true)
+                callbackFlag = true
+            },
+            (anime, info, onReply) => {
+
+            },
+            (reply, attachment) => {
+
+            }
+        )
+        expect(callbackFlag).toBe(true)
+    })
+    it('should match multiple titles', () => {
+        let titles = [
+            'Title One',
+            'Title Two',
+            'Title Three'
+        ]
+        parseAnimeTitles(
+            'Here is a message with multiple titles. *Title One*, _Title Two_, and **Title Three**',
+            mockChannels[1],
+            createNewServerPreferences(),
+            (title, onSuccess, onReply) => {
+                titles = titles.filter(value => { return value != title })
+            },
+            (anime, info, onReply) => {
+
+            },
+            (reply, attachment) => {
+
+            }
+        )
+        expect(titles.length).toBe(0)
+    })
+    it('should match nothing when given no titles', () => {
+        parseAnimeTitles(
+            'This message does not contain any messages but it does have tricky symbols ` * ~ " ',
+            mockChannels[1],
+            createNewServerPreferences(),
+            (title, onSuccess, onReply) => {
+                expect(false).toBe(true) // Fail test
+            },
+            (anime, info, onReply) => {
+
+            },
+            (reply, attachment) => {
+
+            }
+        )
+    })
+})
+
 describe('fuzzyMatch function', () => {
     it('should match exact titles', () => {
         expect(fuzzyMatch('Attack on Titan', sp)).toHaveProperty('title', 'Shingeki no Kyojin')

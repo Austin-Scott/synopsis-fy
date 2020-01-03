@@ -334,7 +334,7 @@ function parseConfigurationCommands(isAdmin, messageContent, previousMessageCont
 
     if (messageContent.startsWith('s!')) {
 
-        if(messageContent.match(/s!(enable|disable)/)) {
+        if (messageContent.match(/s!(enable|disable)/)) {
             messageContent += ' ' + currentChannelName
         }
 
@@ -354,7 +354,7 @@ function parseConfigurationCommands(isAdmin, messageContent, previousMessageCont
             return removeChannel(isAdmin, listOfTextChannels, removeChannelMatcher, serverPreferences, serverId, onSavePreferences, onReply)
         } else {
             printHelp(onReply)
-            if(helpMatcher) {
+            if (helpMatcher) {
                 return true
             }
             return false
@@ -365,12 +365,31 @@ function parseConfigurationCommands(isAdmin, messageContent, previousMessageCont
 /**
  * 
  */
-function parseAnimeTitles(messageContent, channelName, serverPreferences, onReply) {
+function getSynopsisFromMAL(title, onSuccess, onReply) {
+    // Try to match the title
+    let anime = fuzzyMatch(title, serverPreferences)
+
+    // If the match was successful
+    if (anime != null) {
+        // Request information from MyAnimeList
+        mal.findAnime(anime.malId)
+            .then(info => {
+                // Post synopsis about this title
+                onSuccess(anime, info, onReply)
+            })
+            .catch(err => console.log(err))
+    }
+}
+
+/**
+ * 
+ */
+function parseAnimeTitles(messageContent, channelName, serverPreferences, onTitle, onSuccess, onReply) {
     if (serverPreferences.allowedChannels.includes(channelName)) {
 
 
         // Regex that matches: italics, bold, striked, or quoted text
-        let regex = /(\*{1,2}|\~{2}|\"|_|'|`)(.+?)\1/
+        let regex = /(\*{1,2}|\~{2}|\"|_{1,2}|'|`)(.+?)\1/
 
         // Array of possible titles in the original message
         let titles = []
@@ -385,19 +404,7 @@ function parseAnimeTitles(messageContent, channelName, serverPreferences, onRepl
 
         // For each possible title
         titles.forEach(title => {
-            // Try to match the title
-            let anime = fuzzyMatch(title, serverPreferences)
-
-            // If the match was successful
-            if (anime != null) {
-                // Request information from MyAnimeList
-                mal.findAnime(anime.malId)
-                    .then(info => {
-                        // Post synopsis about this title
-                        postDesc(anime, info, onReply)
-                    })
-                    .catch(err => console.log(err))
-            }
+            onTitle(title, onSuccess, onReply)
         })
 
     }
@@ -427,7 +434,7 @@ client.on('message', msg => {
         }
 
         parseConfigurationCommands(isAdmin, messageContent, previousMessageContent, channelName, listOfTextChannels, serverPreferences, serverId, saveServerPreferences, (reply) => { msg.reply(reply) })
-        parseAnimeTitles(messageContent, channelName, serverPreferences, (reply, attachment) => { msg.channel.send(reply, attachment) })
+        parseAnimeTitles(messageContent, channelName, serverPreferences, getSynopsisFromMAL, postDesc, (reply, attachment) => { msg.channel.send(reply, attachment) })
     }
 })
 
