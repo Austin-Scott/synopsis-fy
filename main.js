@@ -442,11 +442,23 @@ function parseAnimeTitles(allowNSFW, messageContent, channelName, serverPreferen
     }
 }
 
-function getMessagesInChannel(channel) {
+function getMessagesInChannel(channel, numberOfMessages, before) {
     return new Promise((resolve, reject) => {
-        channel.fetchMessages({ limit: 100 })
-            .then(messages => {
-                resolve(messages)
+        if (numberOfMessages == 0) {
+            resolve([])
+            return
+        }
+        let messagesToFetch = Math.min(100, numberOfMessages)
+        channel.fetchMessages({ limit: messagesToFetch, before: before })
+            .then(async messages => {
+                let messagesRemaining = numberOfMessages - messagesToFetch
+                if (messages.size == messagesToFetch) {
+                    let lastId = Array.from(messages.values()).pop().id
+                    let nextMessages = await getMessagesInChannel(channel, messagesRemaining, lastId)
+                    resolve(messages.concat(nextMessages))
+                } else {
+                    resolve(messages)
+                }
             })
             .catch(err => { reject(err) })
     })
@@ -472,20 +484,32 @@ function getPreviousMessage(messages, user) {
 function getRecentRecommendations(messages, serverPreferences) {
     let matchQueue = []
     let result = []
+    let matchFlags = []
     messages.forEach(message => {
-        if(matchQueue.length > 0 && !message.author.bot) {
-            parseAnimeTitles(message.channel.nsfw, message.content, message.channel.name, serverPreferences, (allowNSFW, title, serverPreferences, onSuccess, onReply) => {
+        if (matchQueue.length > 0 && !message.author.bot) {
+            if (message.content.match(/^s!match$/)) {
+                matchFlags.push(message.author)
+                return
+            }
+            let newPreferences = Object.assign({}, serverPreferences)
+            newPreferences.allowedChannels.push(message.channel.name)
+            if (matchFlags.size > 0 && matchFlags.some(user => { return message.author.id == user.id })) {
+                newPreferences.maximumStringMatchDistance = Number.MAX_SAFE_INTEGER
+                matchFlags = matchFlags.filter(user => { return message.author.id != user.id })
+            }
+            parseAnimeTitles(message.channel.nsfw, message.content, message.channel.name, newPreferences, (allowNSFW, title, serverPreferences, onSuccess, onReply) => {
                 let anime = fuzzyMatch(title, serverPreferences)
-                if(!anime) return
+                if (!anime) return
                 matchQueue.forEach((match, index) => {
-                    if(anime.malId == match.id) {
+                    if (anime.malId == match.id) {
                         let name = message.author.username
-                        if(message.member) {
+                        if (message.member) {
                             name = message.member.nickname || name
                         }
                         result.push({
                             name: name,
                             title: match.title,
+                            date: match.date,
                             url: `https://discordapp.com/channels/${message.guild.id}/${message.channel.id}/${message.id}`
                         })
                         matchQueue.splice(index, 1)
@@ -493,12 +517,13 @@ function getRecentRecommendations(messages, serverPreferences) {
                 })
             })
         }
-        if(message.author.bot && message.author.id == client.user.id) {
+        if (message.author.bot && message.author.id == client.user.id) {
             let synopsisMatcher = message.content.match(/^\*\*(.*?)\*\*.*\n<https:\/\/myanimelist\.net\/anime\/(\d+)>/)
-            if(synopsisMatcher) {
+            if (synopsisMatcher) {
                 matchQueue.push({
                     title: synopsisMatcher[1],
-                    id: synopsisMatcher[2]
+                    id: synopsisMatcher[2],
+                    date: message.createdAt
                 })
             }
         }
@@ -508,13 +533,13 @@ function getRecentRecommendations(messages, serverPreferences) {
 
 async function processMessages(channel, user, serverPreferences, getRecent) {
     try {
-        let messages = await getMessagesInChannel(channel)
+        let messages = await getMessagesInChannel(channel, getRecent ? 500 : 25)
         let previousMessage = getPreviousMessage(messages, user)
         if (previousMessage) {
             previousMessage = previousMessage.content
         }
         let recentRecommendations = null
-        if(getRecent) {
+        if (getRecent) {
             recentRecommendations = getRecentRecommendations(messages, serverPreferences)
         }
 
@@ -542,12 +567,37 @@ client.on('message', async (msg) => {
         let previousMessageContent = ''
         let messageHistory = await processMessages(msg.channel, msg.author, serverPreferences, messageContent.match(/^s!recent$/))
         if (messageHistory) {
-            if(messageHistory.recentRecommendations && messageHistory.recentRecommendations.length > 0) {
-                let result = 'Recent recommendations in this channel:\n'
-                messageHistory.recentRecommendations.forEach(recommendation => {
-                    result += `**${recommendation.title}** • *${recommendation.name}* • <${recommendation.url}>\n`
+            if (messageHistory.recentRecommendations && messageHistory.recentRecommendations.length > 0) {
+                messageHistory.recentRecommendations.sort((a, b) => {
+                    if (a.name == b.name) {
+                        if (a.date > b.date) {
+                            return -1
+                        } else if (a.date < b.date) {
+                            return 1
+                        } else {
+                            return 0
+                        }
+                    } else if (a.name < b.name) {
+                        return -1
+                    } else {
+                        return 1
+                    }
                 })
-                msg.channel.send(result)
+                let result = 'Recent recommendations in this channel:\n'
+                let previousName = ''
+                let remainingForName = 0
+                messageHistory.recentRecommendations.forEach(recommendation => {
+                    if (recommendation.name != previousName) {
+                        previousName = recommendation.name
+                        remainingForName = 10
+                        result += `__Titles mentioned by *${previousName}*__\n`
+                    }
+                    if (remainingForName > 0) {
+                        result += `**${recommendation.title}** • <${recommendation.url}>\n`
+                        remainingForName--
+                    }
+                })
+                msg.channel.send(result, { split: true })
                 return
             }
             if (messageHistory.previousMessage) {
