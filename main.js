@@ -156,11 +156,6 @@ function fuzzyMatch(text, serverPreferences) {
             }
         })
 
-        // If none of the fuzzy matches were close enough
-        if (smallestDistance > serverPreferences.maximumStringMatchDistance) {
-            bestFuzzyMatch = null
-        }
-
         // If there was a substring match
         if (bestSubstringMatch != null) {
             anime = bestSubstringMatch
@@ -318,10 +313,21 @@ function removeChannel(isAdmin, authorHandle, listOfTextChannels, removeChannelM
  */
 function printHelp(helpRequested, command, authorHandle, onReply) {
     onReply(
-        `${authorHandle}, ${helpRequested ? '' : `"${command}" *is not a valid command. Please try again.*\n`}***Command list:***
+        `${authorHandle}, ${helpRequested ? '' : `"${command}" *is not a valid command. Please try again.*\n`}***Instructions:***
+For all channels with synopsis reponses enabled this bot will respond to any anime title that is: *Italicized*, **Bolden**, __Underlined__, ~~Struckthrough~~, \`Code blocked\`, or "Quoted" with a synopsis of that anime from MyAnimeList.net
+
+__Note: You must also prepend a lowercase 's' to your title.__
+Examples:
+\`s**Attack on Titan**\` Will match **Attack on Titan**
+\`s_Attack on Titan_\` Will match **Attack on Titan**
+\`s"Attack on Titan"\` Will match **Attack on Titan**
+\`**Attack on Titan**\` Will ***not*** match anything
+\`s **Attack on Titan**\` Will ***not*** match anything
+
+***Command list:***
+
 **Usable by anyone:**
 Get links to recent recommendations in this channel: \`s!recent\`
-Find closest match title for my previous message: \`s!match\`
 View synopsis response channel list: \`s!list\`
 View information about this bot: \`s!about\`
 Print this help dialog: \`s!help\`
@@ -340,10 +346,6 @@ Disable synopsis responses in a specific channel: \`s!disable CHANNEL-NAME-HERE\
 function printAbout(authorHandle, onReply) {
     onReply(
         `${authorHandle}, ***About Synopsis-fy:***
-For all channels with synopsis reponses enabled this bot will respond to any anime title that is: *Italicized*, **Bolden**, __Underlined__, ~~Struckthrough~~, \`Code blocked\`, or "Quoted" with a synopsis of that anime from MyAnimeList.net
-
-*Please note that hentai titles will only be matched in NSFW channels.*
-
 Created with ❤️ for the *UW-Stout An-Bu Club* by Austin Scott
 Add this bot to your own server: <https://discordapp.com/oauth2/authorize?&client_id=657318125989003323&scope=bot&permissions=8>
 Source code: <https://github.com/Austin-Scott/synopsis-fy>
@@ -364,7 +366,6 @@ function parseConfigurationCommands(isAdmin, allowNSFW, authorHandle, messageCon
         }
 
         let listChannelMatcher = messageContent.match(/^s!list$/)
-        let matchMessageMatcher = messageContent.match(/^s!match$/)
         let addChannelMatcher = messageContent.match(/^s!enable (\S+)$/)
         let removeChannelMatcher = messageContent.match(/^s!disable (\S+)$/)
         let aboutMatcher = messageContent.match(/^s!about$/)
@@ -376,11 +377,6 @@ function parseConfigurationCommands(isAdmin, allowNSFW, authorHandle, messageCon
             return printAbout(authorHandle, onReply)
         } else if (addChannelMatcher) {
             return addChannel(isAdmin, authorHandle, listOfTextChannels, addChannelMatcher, serverPreferences, serverId, onSavePreferences, onReply)
-        } else if (matchMessageMatcher) {
-            let tempServerPref = Object.assign({}, serverPreferences)
-            tempServerPref.maximumStringMatchDistance = Number.MAX_SAFE_INTEGER
-            parseAnimeTitles(allowNSFW, previousMessageContent, currentChannelName, tempServerPref, getSynopsisFromMAL, postDesc, onReply)
-            return true
         } else if (removeChannelMatcher) {
             return removeChannel(isAdmin, authorHandle, listOfTextChannels, removeChannelMatcher, serverPreferences, serverId, onSavePreferences, onReply)
         } else {
@@ -416,12 +412,12 @@ function getSynopsisFromMAL(allowNSFW, title, serverPreferences, onSuccess, onRe
 /**
  * 
  */
-function parseAnimeTitles(allowNSFW, messageContent, channelName, serverPreferences, onTitle, onSuccess, onReply) {
+function parseAnimeTitles(allowNSFW, messageContent, channelName, serverPreferences, onTitle, onSuccess, onReply, matcherRegex) {
     if (serverPreferences.allowedChannels.includes(channelName)) {
 
 
         // Regex that matches: italics, bold, striked, or quoted text
-        let regex = /(\*{1,2}|\~{2}|\"|_{1,2}|'|`)(.+?)\1/
+        let regex = matcherRegex || /s(\*{1,2}|\~{2}|\"|_{1,2}|'|`)(.+?)\1/
 
         // Array of possible titles in the original message
         let titles = []
@@ -515,7 +511,7 @@ function getRecentRecommendations(messages, serverPreferences) {
                         matchQueue.splice(index, 1)
                     }
                 })
-            })
+            }, /(\*{1,2}|\~{2}|\"|_{1,2}|'|`)(.+?)\1/)
         }
         if (message.author.bot && message.author.id == client.user.id) {
             let synopsisMatcher = message.content.match(/^\*\*(.*?)\*\*.*\n<https:\/\/myanimelist\.net\/anime\/(\d+)>/)
@@ -621,6 +617,20 @@ client.on('message', async (msg) => {
 
         parseConfigurationCommands(isAdmin, allowNSFW, authorHandle, messageContent, previousMessageContent, channelName, listOfTextChannels, serverPreferences, serverId, saveServerPreferences, (reply, attachment) => { msg.channel.send(reply, attachment) })
         parseAnimeTitles(allowNSFW, messageContent, channelName, serverPreferences, getSynopsisFromMAL, postDesc, (reply, attachment) => { msg.channel.send(reply, attachment) })
+
+        let regex = /s((\*{1,2}|\~{2}|\"|_{1,2}|'|`).+?\2)/
+        let newMessageContent = messageContent
+        let matches = messageContent.match(regex)
+        while (matches != null && matches.length >= 3) {
+            newMessageContent = newMessageContent.replace(matches[0], matches[1])
+            matches = newMessageContent.match(regex)
+        }
+        if(newMessageContent != messageContent) {
+            msg.edit(newMessageContent)
+        }
+
+
+
     }
 })
 
