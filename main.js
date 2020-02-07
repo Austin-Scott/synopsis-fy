@@ -533,6 +533,10 @@ function getRecentRecommendations(messages, serverPreferences) {
 
 async function processMessages(channel, user, serverPreferences, getRecent) {
     try {
+        let notice = null
+        if(getRecent) {
+            notice = channel.send("**Compiling recent recommendations in this channel. Please be patient, this operation could take some time...**")
+        }
         let messages = await getMessagesInChannel(channel, getRecent ? 500 : 25)
         let previousMessage = getPreviousMessage(messages, user)
         if (previousMessage) {
@@ -545,7 +549,8 @@ async function processMessages(channel, user, serverPreferences, getRecent) {
 
         return {
             previousMessage: previousMessage,
-            recentRecommendations: recentRecommendations
+            recentRecommendations: recentRecommendations,
+            notice: notice
         }
 
     } catch (err) {
@@ -597,7 +602,20 @@ client.on('message', async (msg) => {
                         remainingForName--
                     }
                 })
+                if(messageHistory.notice) {
+                    messageHistory.notice.then((msg)=>{
+                        msg.delete()
+                    })
+                }
                 msg.channel.send(result, { split: true })
+                return
+            } else if(messageHistory.recentRecommendations && messageHistory.recentRecommendations.length == 0) {
+                if(messageHistory.notice) {
+                    messageHistory.notice.then((msg)=>{
+                        msg.delete()
+                    })
+                }
+                msg.channel.send("There have been no recent recommendations in this channel.")
                 return
             }
             if (messageHistory.previousMessage) {
