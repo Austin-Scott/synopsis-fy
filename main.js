@@ -5,6 +5,8 @@ const Jikan = require('jikan-node')
 const mal = new Jikan()
 const lev = require('fast-levenshtein')
 const util = require('util')
+const Sentiment = require('sentiment')
+let sentiment = new Sentiment()
 
 let model = loadOrCreateNewModel()
 
@@ -506,10 +508,12 @@ function getRecentRecommendations(messages, serverPreferences) {
                         if (message.member) {
                             name = message.member.nickname || name
                         }
+                        let score = sentiment.analyze(message.content.replace(title, ''))
                         result.push({
                             name: name,
                             title: match.title,
                             date: match.date,
+                            score: score.comparative,
                             url: `https://discordapp.com/channels/${message.guild.id}/${message.channel.id}/${message.id}`
                         })
                         matchQueue.splice(index, 1)
@@ -560,6 +564,37 @@ async function processMessages(channel, user, serverPreferences, getRecent) {
     return null
 }
 
+function getSentimentEmoji(score) {
+    if(score == 0) {
+        return '😶'
+    } else if(score < 0) {
+        score = Math.abs(score)
+        if(score < 0.1) {
+            return '😐'
+        } else if(score < 0.2) {
+            return '🙁'
+        } else if(score < 0.3) {
+            return '☹️'
+        } else if(score < 0.4) {
+            return '🤢'
+        } else {
+            return '🤮'
+        }
+    } else {
+        if(score < 0.1) {
+            return '🙂'
+        } else if(score < 0.2) {
+            return '😃'
+        } else if(score < 0.3) {
+            return '😄'
+        } else if(score < 0.4) {
+            return '😆'
+        } else {
+            return '😍'
+        }
+    }
+}
+
 /**
  * Executed whenever a message is posted to any channel on any server
  */
@@ -598,7 +633,7 @@ client.on('message', async (msg) => {
                         result += `__Titles mentioned by *${previousName}*__\n`
                     }
                     if (remainingForName > 0) {
-                        result += `**${recommendation.title}** • <${recommendation.url}>\n`
+                        result += `${getSentimentEmoji(recommendation.score)} • **${recommendation.title}** • <${recommendation.url}>\n`
                         remainingForName--
                     }
                 })

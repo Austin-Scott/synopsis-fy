@@ -15,7 +15,9 @@
     "discord.js": "^11.5.1",
     "fast-levenshtein": "^2.0.6",
     "jest": "^24.9.0",
-    "jikan-node": "^1.2.0"
+    "jikan-node": "^1.2.0",
+    "sentiment": "^5.0.2",
+    "wink-sentiment": "^5.0.2"
   },
   "devDependencies": {
     "pre-commit": "^1.2.2"
