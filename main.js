@@ -5,8 +5,7 @@ const Jikan = require('jikan-node')
 const mal = new Jikan()
 const lev = require('fast-levenshtein')
 const util = require('util')
-const Sentiment = require('sentiment')
-let sentiment = new Sentiment()
+const sentiment = require('wink-sentiment')
 
 let model = loadOrCreateNewModel()
 
@@ -508,12 +507,12 @@ function getRecentRecommendations(messages, serverPreferences) {
                         if (message.member) {
                             name = message.member.nickname || name
                         }
-                        let score = sentiment.analyze(message.content.replace(title, ''))
+                        let score = sentiment(message.content.replace(title, ''))
                         result.push({
                             name: name,
                             title: match.title,
                             date: match.date,
-                            score: score.comparative,
+                            score: score.normalizedScore,
                             url: `https://discordapp.com/channels/${message.guild.id}/${message.channel.id}/${message.id}`
                         })
                         matchQueue.splice(index, 1)
@@ -569,25 +568,25 @@ function getSentimentEmoji(score) {
         return '😶'
     } else if(score < 0) {
         score = Math.abs(score)
-        if(score < 0.1) {
+        if(score < 1) {
             return '😐'
-        } else if(score < 0.2) {
+        } else if(score < 2) {
             return '🙁'
-        } else if(score < 0.3) {
+        } else if(score < 3) {
             return '☹️'
-        } else if(score < 0.4) {
+        } else if(score < 4) {
             return '🤢'
         } else {
             return '🤮'
         }
     } else {
-        if(score < 0.1) {
+        if(score < 1) {
             return '🙂'
-        } else if(score < 0.2) {
+        } else if(score < 2) {
             return '😃'
-        } else if(score < 0.3) {
+        } else if(score < 3) {
             return '😄'
-        } else if(score < 0.4) {
+        } else if(score < 4) {
             return '😆'
         } else {
             return '😍'
