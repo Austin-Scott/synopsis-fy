@@ -1,0 +1,27 @@
+{
+  "name": "synopsis-fy",
+  "version": "2.0.0",
+  "description": "Anime, manga, and light novel information and recommendation bot for Discord powered by MyAnimeList",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node ./dist/main.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Austin-Scott/synopsis-fy.git"
+  },
+  "author": "Austin Scott",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Austin-Scott/synopsis-fy/issues"
+  },
+  "homepage": "https://github.com/Austin-Scott/synopsis-fy#readme",
+  "dependencies": {
+    "@types/nedb": "^1.8.9",
+    "discord.js": "^12.2.0",
+    "jikan-client": "^1.0.0",
+    "nedb": "^1.8.0"
+  }
+}

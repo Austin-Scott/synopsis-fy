@@ -1,1 +1,4 @@
 token.json
+db/
+dist/
+node_modules/
