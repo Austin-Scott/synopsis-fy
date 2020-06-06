@@ -13,7 +13,7 @@ client.on('ready', () => {
     client.user?.setPresence({ activity: { name: '| s!help', type: 'WATCHING' }, status: 'online' })
 })
 
-client.on('message', msg => {
+client.on('message', async msg => {
     if(!msg.author.bot) {
         // Tested at: https://regex101.com/r/0Z9Wcu/2
         const synopsisCommandMatcher = /^s!(anime|a|manga|m|novel|n) ("(.*)" ?(.*)|(.*))$/
@@ -42,37 +42,37 @@ client.on('message', msg => {
             let title = match[3] || match[2]
             let review = match[4] || ''
 
-            synopsis(msg, mediumType as ('anime' | 'manga' | 'novel'), title, review)
+            await synopsis(msg, mediumType as ('anime' | 'manga' | 'novel'), title, review)
 
         } else if(match = messageText.match(suggestCommandMatcher)) {
 
             let query = match[2] || ''
 
-            suggest(msg, query)
+            await suggest(msg, query)
 
         } else if(match = messageText.match(enableCommandMatcher)) {
 
             let channel = match[1] || ''
 
-            enable(msg, channel)
+            await enable(msg, channel)
 
         } else if(match = messageText.match(disableCommandMatcher)) {
 
             let channel = match[1] || ''
 
-            disable(msg, channel)
+            await disable(msg, channel)
 
         } else if(match = messageText.match(helpCommandMatcher)) {
 
-            help(msg)
+            await help(msg)
 
         } else if(match = messageText.match(aboutCommandMatcher)) {
 
-            about(msg)
+            await about(msg)
 
         } else if(match = messageText.match(mylistCommandMatcher)) {
 
-            mylist(msg)
+            await mylist(msg)
 
         }
     }
