@@ -1,14 +1,17 @@
 import { StringResolvable, MessageEmbed, Message, User } from "discord.js"
+import { start } from "repl"
 
 export default abstract class InteractiveMessage<T> {
     private model: Array<T> = []
+    private globalState: any = {}
     private currentPage = 0
     private isPageLocked = false
     private creatingUser: User | null = null
     private message: Message | null = null
 
-    constructor(model: Array<T>) {
+    constructor(model: Array<T>, state: any = {}) {
         this.model = model
+        this.globalState = state
     }
 
     getNavigateLeftSymbol() {
@@ -19,6 +22,10 @@ export default abstract class InteractiveMessage<T> {
         return '▶️'
     }
 
+    getGlobalState() {
+        return this.globalState
+    }
+
     async send(msg: Message) {
         this.creatingUser = msg.author
         const messageContent = this.renderPage(this.getCurrentSelection(), this.currentPage, this.isPageLocked, this.model.length)
@@ -26,8 +33,8 @@ export default abstract class InteractiveMessage<T> {
 
         await this.message.react(this.getNavigateLeftSymbol())
         const startingReactions = this.getStartingReactions()
-        for(const reaction in startingReactions) {
-            await this.message.react(reaction)
+        for(let i = 0; i<startingReactions.length;i++) {
+            await this.message.react(startingReactions[i])
         }
         await this.message.react(this.getNavigateRightSymbol())
 
@@ -57,8 +64,7 @@ export default abstract class InteractiveMessage<T> {
                     if(startingPage !== this.currentPage) {
                         // Re-render page
                         await this.onChangePage()
-                        const newPage = this.renderPage(this.model[this.currentPage], this.currentPage, this.isPageLocked, this.model.length)
-                        await this.message?.edit(newPage[0], newPage[1])
+                        this.requestRerender()
                     }
 
                 }
@@ -77,8 +83,7 @@ export default abstract class InteractiveMessage<T> {
             await this.onLockSelection()
             await this.removeAllReactionsOfType(this.getNavigateLeftSymbol(), true)
             await this.removeAllReactionsOfType(this.getNavigateRightSymbol(), true)
-            const newPage = this.renderPage(this.model[this.currentPage], this.currentPage, this.isPageLocked, this.model.length)
-            await this.message?.edit(newPage[0], newPage[1])
+            this.requestRerender()
         }
     }
 
@@ -89,6 +94,11 @@ export default abstract class InteractiveMessage<T> {
 
     getCreatingUser(): User | null {
         return this.creatingUser
+    }
+
+    requestRerender() {
+        const newPage = this.renderPage(this.model[this.currentPage], this.currentPage, this.isPageLocked, this.model.length)
+        this.message?.edit(newPage[0], newPage[1])
     }
 
     async removeAllReactionsOfType(name: string, botInclusive: boolean = false) {
@@ -109,12 +119,25 @@ export default abstract class InteractiveMessage<T> {
         
     }
 
+    async unreact(name: string) {
+        const reactions = this.message?.reactions.cache.find(reaction => reaction.emoji.name == name)
+        const users = await reactions?.users.fetch()
+        if(users !== undefined) {
+            for(const user of users) {
+                if(user[1].bot) {
+                    const userID = user[1].id
+                    await reactions?.users.remove(userID)
+                }
+            }
+        }
+    }
+
     getCurrentSelection(): T {
         return this.model[this.currentPage]
     }
 
     abstract renderPage(data: T, currentPage: number, isPageLocked: boolean, totalPages: number): [StringResolvable, MessageEmbed | undefined]
-    abstract getStartingReactions(): Array<String>
+    abstract getStartingReactions(): Array<string>
     abstract async onReaction(reaction: string, user: User): Promise<boolean>
     abstract async onChangePage(): Promise<void>
     abstract async onLockSelection(): Promise<void>

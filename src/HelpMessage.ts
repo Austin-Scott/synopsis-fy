@@ -11,7 +11,7 @@ export default class HelpMessage extends InteractiveMessage<CommandHelpSection> 
             .setFooter(`Page ${currentPage + 1} of ${totalPages}`)
         return ['', embed]
     }
-    getStartingReactions(): String[] {
+    getStartingReactions(): string[] {
         return []
     }
     async onReaction(reaction: string, user: User): Promise<boolean> {

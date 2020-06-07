@@ -8,10 +8,29 @@ export interface CommandHelpSection {
     commands: Array<CommandHelp>
 }
 
-export interface Synopsis {
+export interface SearchResult {
+    id: number
     title: string
     malURL: string
-    malId: number
     imageURL: string
+    partialSynopsis: string
+    getDetails: (arg0: ()=>void) => MalAnimeDataModel | null
+}
+
+export interface MalAnimeSearchModel {
+    thumbnail: string
+    url: string
+    shortDescription: string
+    title: string
+    id: number
+}
+
+export interface MalAnimeDataModel {
+    title: string
     synopsis: string
+    picture: string
+    englishTitle: string
+    genres: Array<string>
+    id: number
+    url: string
 }

@@ -1,20 +1,55 @@
 import { Message } from "discord.js"
-import Jikants from 'jikants'
-import { Synopsis } from "./interfaces"
+import { SearchResult, MalAnimeSearchModel, MalAnimeDataModel } from "./interfaces"
 import SynopsisMessage from "./SynopsisMessage"
-import { Search } from "jikants/dist/src/interfaces/search/Search"
+import malScraper from 'mal-scraper'
+
+const malCache: any = {}
+
+function getDetailsIfAvailable(url: string): MalAnimeDataModel | null {
+    return malCache[url] || null
+}
+
+async function getMalDetails(url: string): Promise<MalAnimeDataModel> {
+    const result: MalAnimeDataModel = await malScraper.getInfoFromURL(url)
+    malCache[url] = result
+    return result
+}
+
+async function searchMal(type: 'anime' | 'manga' | 'novel', query: string): Promise<Array<SearchResult>> {
+    try {
+        // TODO: fix type for light novels
+        const results: Array<MalAnimeSearchModel> = await malScraper.search.search(type, {
+            term: query
+        })
+        return results.map(result => {
+            const getDetails = (callback: ()=>void): MalAnimeDataModel | null => {
+                const cache = getDetailsIfAvailable(result.url)
+                if(cache) {
+                    return cache
+                }
+                getMalDetails(result.url)
+                    .then(value => {
+                        callback()
+                    })
+                return null
+            }
+            return {
+                title: result.title,
+                malURL: result.url,
+                partialSynopsis: result.shortDescription,
+                imageURL: result.thumbnail,
+                id: result.id,
+                getDetails: getDetails
+            }
+        })
+    } catch (error) {
+        console.log(error)
+        return []
+    }
+}
 
 export default async function synopsis(msg: Message, type: 'anime' | 'manga' | 'novel', title: string, review: string) {
-    const searchResults = await Jikants.Search.search(title, type) as Search
-    const results = searchResults.results.map<Synopsis>(result => {
-        return {
-            title: result.title,
-            malId: result.mal_id,
-            malURL: result.url,
-            imageURL: result.image_url,
-            synopsis: result.synopsis
-        }
-    })
-    const synposisMessage = new SynopsisMessage(results)
+    const searchResults = await searchMal(type, title)
+    const synposisMessage = new SynopsisMessage(searchResults, { review: review })
     await synposisMessage.send(msg)
 }
