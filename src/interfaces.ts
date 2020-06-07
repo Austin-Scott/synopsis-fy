@@ -23,6 +23,7 @@ export interface MalAnimeSearchModel {
     shortDescription: string
     title: string
     id: number
+    type: string
 }
 
 export interface MalAnimeDataModel {

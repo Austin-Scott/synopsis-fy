@@ -26,8 +26,12 @@ export default class SynopsisMessage extends InteractiveMessage<SearchResult> {
                 embed.setFooter(`Use ${this.getStartingReactions()[0]} to recommend this\nUse ${this.getStartingReactions()[1]} to remove this dialog\nResult ${currentPage + 1} of ${totalPages}`)
             }
 
-            embed.addField('English title', details.englishTitle)
-            embed.addField('Genres', details.genres.join(', '))
+            if(details.englishTitle) {
+                embed.addField('English title', details.englishTitle)
+            }
+            if(details.genres.length > 0) {
+                embed.addField('Genres', details.genres.join(', '))
+            }
 
             return ['', embed]
         } else {

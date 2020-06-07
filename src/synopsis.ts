@@ -17,10 +17,21 @@ async function getMalDetails(url: string): Promise<MalAnimeDataModel> {
 
 async function searchMal(type: 'anime' | 'manga' | 'novel', query: string): Promise<Array<SearchResult>> {
     try {
-        // TODO: fix type for light novels
-        const results: Array<MalAnimeSearchModel> = await malScraper.search.search(type, {
-            term: query
+        let typeQuery = 0
+        let mainType = type
+        if(type=='novel') {
+            typeQuery = 2
+            mainType = 'manga'
+        }
+        let results: Array<MalAnimeSearchModel> = await malScraper.search.search(mainType, {
+            term: query,
+            type: typeQuery
         })
+        if(type == 'manga') {
+            results = results.filter(result => {
+                return result.type != 'Novel'
+            })
+        }
         return results.map(result => {
             const getDetails = (callback: ()=>void): MalAnimeDataModel | null => {
                 const cache = getDetailsIfAvailable(result.url)
