@@ -37,28 +37,31 @@ export default abstract class InteractiveMessage<T> {
 
             const identifier = reaction.emoji.name
             if((identifier == this.getNavigateLeftSymbol() || identifier == this.getNavigateRightSymbol()) && !this.isPageLocked) {
+                await this.removeAllReactionsOfType(identifier, false)
                 if(user.id == this.creatingUser?.id) {
                     // Handle navigation
                     const startingPage = this.currentPage
                     if(identifier == this.getNavigateLeftSymbol()) {
                         if(this.currentPage > 0) {
                             this.currentPage--
-                            await this.onChangePage()
+                        } else {
+                            this.currentPage = this.model.length - 1
                         }
                     } else {
                         if(this.currentPage < this.model.length - 1) {
                             this.currentPage++
-                            await this.onChangePage()
+                        } else {
+                            this.currentPage = 0
                         }
                     }
                     if(startingPage !== this.currentPage) {
                         // Re-render page
+                        await this.onChangePage()
                         const newPage = this.renderPage(this.model[this.currentPage], this.currentPage, this.isPageLocked, this.model.length)
                         await this.message?.edit(newPage[0], newPage[1])
                     }
 
                 }
-                await this.removeAllReactionsOfType(identifier, false)
             } else {
                 if(!(await this.onReaction(identifier, user))) {
                     await this.removeAllReactionsOfType(identifier, false)

@@ -1,23 +1,80 @@
 import { Message } from "discord.js"
-import { Command } from "./interfaces"
+import { CommandHelpSection } from "./interfaces"
 import HelpMessage from "./HelpMessage"
 
-const commandList: Array<Command> = [
+const commandList: Array<CommandHelpSection> = [
     {
-        command: 's!anime',
-        description: 'Search for an anime',
-        examples: []
+        title: 'Get a synopsis for an anime, manga, or light novel!',
+        commands: [
+            {
+                command: '`s!anime Attack on Titan`',
+                description: 'Get a synopsis for the anime Attack on Titan'
+            },
+            {
+                command: '`s!manga One Piece`',
+                description: 'Get a synopsis for the manga One Piece'
+            },
+            {
+                command: '`s!novel Spice and Wolf`',
+                description: 'Get a synopsis for the light novel Spice and Wolf'
+            }
+        ]
     },
     {
-        command: 's!manga',
-        description: 'Search for an manga',
-        examples: []
+        title: 'Write a review for an anime, manga, or light novel!',
+        commands: [
+            {
+                command: '`s!anime "Attack on Titan" Review goes here.`',
+                description: 'Write a review for the anime Attack on Titan'
+            },
+            {
+                command: '`s!manga "One Piece" Review goes here.`',
+                description: 'Write a review for the manga One Piece'
+            },
+            {
+                command: '`s!novel "Spice and Wolf" Review goes here.`',
+                description: 'Write a review for the light novel Spice and Wolf'
+            }
+        ]
     },
     {
-        command: 's!novel',
-        description: 'Search for an novel',
-        examples: []
-    }
+        title: 'View recommendations',
+        commands: [
+            {
+                command: '`s!suggest`',
+                description: 'View recommendations from others on your current server.'
+            },
+            {
+                command: '`s!suggest action and adventure anime`',
+                description: 'View action and adventure anime recommendations.'
+            },
+            {
+                command: '`s!mylist`',
+                description: 'View and manage a list of all of your recommendations.'
+            }
+        ]
+    },
+    {
+        title: 'Misc. and administration',
+        commands: [
+            {
+                command: '`s!help`',
+                description: 'View this help dialog.'
+            },
+            {
+                command: '`s!about`',
+                description: 'View information about this bot.'
+            },
+            {
+                command: '`s!enable`',
+                description: 'Enable this bot in the current channel. You must be an admin for this to work.'
+            },
+            {
+                command: '`s!disable`',
+                description: 'Disable this bot in the current channel. You must be an admin for this to work.'
+            }
+        ]
+    },
 ]
 
 export async function help(msg: Message) {

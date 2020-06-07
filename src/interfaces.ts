@@ -1,5 +1,9 @@
-export interface Command {
+interface CommandHelp {
     command: string
     description: string
-    examples: Array<string>
+}
+
+export interface CommandHelpSection {
+    title: string
+    commands: Array<CommandHelp>
 }
