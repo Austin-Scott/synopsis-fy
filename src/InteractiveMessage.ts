@@ -12,6 +12,9 @@ export default abstract class InteractiveMessage<T> {
     constructor(model: Array<T>, state: any = {}) {
         this.model = model
         this.globalState = state
+        if(model.length == 0) {
+            this.isPageLocked = true
+        }
     }
 
     getNavigateLeftSymbol() {
@@ -31,12 +34,16 @@ export default abstract class InteractiveMessage<T> {
         const messageContent = this.renderPage(this.getCurrentSelection(), this.currentPage, this.isPageLocked, this.model.length)
         this.message = await msg.channel.send(messageContent[0], messageContent[1])
 
-        await this.message.react(this.getNavigateLeftSymbol())
+        if(!this.isPageLocked) {
+            await this.message.react(this.getNavigateLeftSymbol())
+        }
         const startingReactions = this.getStartingReactions()
         for(let i = 0; i<startingReactions.length;i++) {
             await this.message.react(startingReactions[i])
         }
-        await this.message.react(this.getNavigateRightSymbol())
+        if(!this.isPageLocked) {
+            await this.message.react(this.getNavigateRightSymbol())
+        }
 
         const collector = this.message.createReactionCollector((reaction, user) => true)
         collector.on('collect', async (reaction, user) => {
@@ -132,11 +139,14 @@ export default abstract class InteractiveMessage<T> {
         }
     }
 
-    getCurrentSelection(): T {
+    getCurrentSelection(): T | null {
+        if(this.model.length == 0) {
+            return null
+        }
         return this.model[this.currentPage]
     }
 
-    abstract renderPage(data: T, currentPage: number, isPageLocked: boolean, totalPages: number): [StringResolvable, MessageEmbed | undefined]
+    abstract renderPage(data: T | null, currentPage: number, isPageLocked: boolean, totalPages: number): [StringResolvable, MessageEmbed | undefined]
     abstract getStartingReactions(): Array<string>
     abstract async onReaction(reaction: string, user: User): Promise<boolean>
     abstract async onChangePage(): Promise<void>

@@ -3,7 +3,16 @@ import { SearchResult } from "./interfaces"
 import { StringResolvable, MessageEmbed, User } from "discord.js"
 
 export default class SynopsisMessage extends InteractiveMessage<SearchResult> {
-    renderPage(data: SearchResult, currentPage: number, isPageLocked: boolean, totalPages: number): [StringResolvable, MessageEmbed | undefined] {
+    renderPage(data: SearchResult | null, currentPage: number, isPageLocked: boolean, totalPages: number): [StringResolvable, MessageEmbed | undefined] {
+        if(data == null) {
+            const embed = new MessageEmbed()
+                .setColor('#e08155')
+                .setTitle('No results found')
+                .setFooter('Result 0 of 0')
+                .setDescription('No results on MyAnimeList were found.')
+
+            return ['', embed]
+        }
         const details = data.getDetails(()=> {
             this.requestRerender()
         })
@@ -46,24 +55,32 @@ export default class SynopsisMessage extends InteractiveMessage<SearchResult> {
         }
     }
     getStartingReactions(): string[] {
+        if(this.getCurrentSelection() == null) {
+            return []
+        }
         return ['👍', '❌']
     }
     async onReaction(reaction: string, user: User): Promise<boolean> {
         const options = this.getStartingReactions()
+        const currentSelection = this.getCurrentSelection()
+        if(currentSelection == null) {
+            return true
+        }
+
         if(reaction == options[0]) {
             // They recommend this anime
             if(user.id == this.getCreatingUser()?.id) {
                 //This is the original creator
                 if(this.getGlobalState().review != '') {
-                    await user.send(`You recommended ${this.getCurrentSelection().title} with a review`)
+                    await user.send(`You recommended ${currentSelection.title} with a review`)
                     await this.lockCurrentPage()
                     await this.removeAllReactionsOfType(this.getStartingReactions()[1], true)
                     await this.unreact(this.getStartingReactions()[0])
                 } else {
-                    await user.send(`You recommended ${this.getCurrentSelection().title}`)
+                    await user.send(`You recommended ${currentSelection.title}`)
                 }
             } else {
-                await user.send(`You recommended ${this.getCurrentSelection().title}`)
+                await user.send(`You recommended ${currentSelection.title}`)
             }
             return true
         } else if(user.id == this.getCreatingUser()?.id && reaction == options[1]) {
