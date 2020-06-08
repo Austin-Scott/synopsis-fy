@@ -34,6 +34,7 @@ export interface MalAnimeDataModel {
     genres: Array<string>
     id: number
     url: string
+    rating: string
 }
 
 export interface ChannelWhitelist {
@@ -49,8 +50,15 @@ export interface MalItem {
 }
 
 export interface Recommendation {
-    userId: string
-    malId: number
+    link: {
+        userId: string
+        malId: number
+    }
     date: string
     review: string
+}
+
+export interface Suggestion {
+    malItem: MalItem
+    recommendations: Array<Recommendation>
 }
