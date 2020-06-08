@@ -35,3 +35,22 @@ export interface MalAnimeDataModel {
     id: number
     url: string
 }
+
+export interface ChannelWhitelist {
+    channelId: string
+}
+
+export interface MalItem {
+    malId: number
+    type: 'anime' | 'manga' | 'novel'
+    malUrl: string
+    rating: string
+    genres: Array<string>
+}
+
+export interface Recommendation {
+    userId: string
+    malId: number
+    date: string
+    review: string
+}

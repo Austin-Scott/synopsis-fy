@@ -5,6 +5,7 @@ import suggest from './suggest'
 import { enable, disable } from './administration'
 import { help, about } from './helpAndAbout'
 import mylist from './mylist'
+import { isChannelWhitelisted } from './database'
 
 const client = new Discord.Client()
 
@@ -14,67 +15,72 @@ client.on('ready', () => {
 })
 
 client.on('message', async msg => {
-    if(!msg.author.bot) {
-        // Tested at: https://regex101.com/r/0Z9Wcu/2
-        const synopsisCommandMatcher = /^s!(anime|a|manga|m|novel|n) ("(.*)" ?(.*)|(.*))$/
-        // Tested at: https://regex101.com/r/YglfCW/1
-        const suggestCommandMatcher = /^s!(suggest|s)( (.+))?$/
-        const enableCommandMatcher = /^s!enable( (.+))?$/
-        const disableCommandMatcher = /^s!disable( (.+))?$/
-        const helpCommandMatcher = /^s!help$/
-        const aboutCommandMatcher = /^s!about$/
-        const mylistCommandMatcher = /^s!mylist$/
+    try {
+        if (!msg.author.bot) {
+            // Tested at: https://regex101.com/r/0Z9Wcu/2
+            const synopsisCommandMatcher = /^s!(anime|a|manga|m|novel|n) ("(.*)" ?(.*)|(.*))$/
+            // Tested at: https://regex101.com/r/YglfCW/1
+            const suggestCommandMatcher = /^s!(suggest|s)( (.+))?$/
+            const enableCommandMatcher = /^s!enable( (.+))?$/
+            const disableCommandMatcher = /^s!disable( (.+))?$/
+            const helpCommandMatcher = /^s!help$/
+            const aboutCommandMatcher = /^s!about$/
+            const mylistCommandMatcher = /^s!mylist$/
 
-        const messageText = msg.content
-        let match: RegExpMatchArray | null
+            const commandAllowed = msg.guild == null || await isChannelWhitelisted(msg.channel.id)
+            const messageText = msg.content
+            let match: RegExpMatchArray | null
 
-        if(match = messageText.match(synopsisCommandMatcher)) {
+            if ((match = messageText.match(synopsisCommandMatcher)) && commandAllowed) {
 
-            let mediumType = match[1]
-            if(mediumType == 'a') {
-                mediumType = 'anime'
-            } else if(mediumType == 'm') {
-                mediumType = 'manga'
-            } else if(mediumType == 'n') {
-                mediumType = 'novel'
+                let mediumType = match[1]
+                if (mediumType == 'a') {
+                    mediumType = 'anime'
+                } else if (mediumType == 'm') {
+                    mediumType = 'manga'
+                } else if (mediumType == 'n') {
+                    mediumType = 'novel'
+                }
+
+                let title = match[3] || match[2]
+                let review = match[4] || ''
+
+                await synopsis(msg, mediumType as ('anime' | 'manga' | 'novel'), title, review)
+
+            } else if ((match = messageText.match(suggestCommandMatcher)) && commandAllowed) {
+
+                let query = match[2] || ''
+
+                await suggest(msg, query)
+
+            } else if (match = messageText.match(enableCommandMatcher)) {
+
+                let channel = match[1] || ''
+
+                await enable(msg, channel)
+
+            } else if (match = messageText.match(disableCommandMatcher)) {
+
+                let channel = match[1] || ''
+
+                await disable(msg, channel)
+
+            } else if ((match = messageText.match(helpCommandMatcher)) && commandAllowed) {
+
+                await help(msg)
+
+            } else if ((match = messageText.match(aboutCommandMatcher)) && commandAllowed) {
+
+                await about(msg)
+
+            } else if ((match = messageText.match(mylistCommandMatcher)) && commandAllowed) {
+
+                await mylist(msg)
+
             }
-
-            let title = match[3] || match[2]
-            let review = match[4] || ''
-
-            await synopsis(msg, mediumType as ('anime' | 'manga' | 'novel'), title, review)
-
-        } else if(match = messageText.match(suggestCommandMatcher)) {
-
-            let query = match[2] || ''
-
-            await suggest(msg, query)
-
-        } else if(match = messageText.match(enableCommandMatcher)) {
-
-            let channel = match[1] || ''
-
-            await enable(msg, channel)
-
-        } else if(match = messageText.match(disableCommandMatcher)) {
-
-            let channel = match[1] || ''
-
-            await disable(msg, channel)
-
-        } else if(match = messageText.match(helpCommandMatcher)) {
-
-            await help(msg)
-
-        } else if(match = messageText.match(aboutCommandMatcher)) {
-
-            await about(msg)
-
-        } else if(match = messageText.match(mylistCommandMatcher)) {
-
-            await mylist(msg)
-
         }
+    } catch (error) {
+        console.log(error)
     }
 })
 
