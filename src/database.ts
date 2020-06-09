@@ -1,5 +1,5 @@
 import Database from 'nedb'
-import { ChannelWhitelist, MalItem, Recommendation } from './interfaces'
+import { ChannelWhitelist, MalItem, Recommendation, Suggestion } from './interfaces'
 import { getDetailsIfAvailable, getMalDetails } from './myAnimeList'
 
 const db = {
@@ -127,6 +127,30 @@ function dbGetAllRecommendations(userId: string): Promise<Array<Recommendation>>
     })
 }
 
+function dbGetUsersRecommendations(userIds: Array<string>): Promise<Array<Recommendation>> {
+    return new Promise((resolve, reject) => {
+        db.Recommendation.find({ 'link.userId': { $in: userIds } }, (error: Error, documents: Array<Recommendation>) => {
+            if(error) {
+                reject(error)
+            } else {
+                resolve(documents)
+            }
+        })
+    })
+}
+
+function dbGetMalItems(malIds: Array<number>): Promise<Array<MalItem>> {
+    return new Promise((resolve, reject) => {
+        db.MalItem.find({ 'malId': { $in: malIds } }, (error: Error, documents: Array<MalItem>) => {
+            if(error) {
+                reject(error)
+            } else {
+                resolve(documents)
+            }
+        })
+    })
+}
+
 function getRecommendation(userId: string, malId: number): Promise<Recommendation | null> {
     return new Promise((resolve, reject) => {
         db.Recommendation.findOne({ 'link.userId': userId, 'link.malId': malId }, (error, document) => {
@@ -198,5 +222,10 @@ export async function getAllRecommendations(userId: string): Promise<Array<Recom
     return recommendations as Array<Recommendation & MalItem>
 }
 
-
+export async function getSuggestions(userIds: Array<string>, type: 'anime' | 'manga' | 'novel' | null, strategy: 'default' | 'recent', genres: Array<string>): Promise<Array<Suggestion>> {
+    const serverRecommendations = await dbGetUsersRecommendations(userIds)
+    const malIds = serverRecommendations.map(recommendation => recommendation.link.malId)
+    const malItems = await dbGetMalItems(malIds)
+    
+}
 
