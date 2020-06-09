@@ -20,7 +20,7 @@ export default class SynopsisMessage extends InteractiveMessage<SearchResult> {
         if(details != null) {
             const embed = new MessageEmbed()
                 .setColor('#e08155')
-                .setTitle(details.title)
+                .setTitle(details.englishTitle || details.title)
                 .setDescription(details.synopsis)
                 .setImage(details.picture)
                 .setURL(data.malURL)
@@ -37,7 +37,7 @@ export default class SynopsisMessage extends InteractiveMessage<SearchResult> {
             }
 
             if(details.englishTitle) {
-                embed.addField('English title', details.englishTitle)
+                embed.addField('Japanese title', details.title)
             }
             if(details.genres.length > 0) {
                 embed.addField('Genres', details.genres.join(', '))

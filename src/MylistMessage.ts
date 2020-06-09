@@ -19,37 +19,45 @@ export default class MylistMessage extends InteractiveMessage<Recommendation & M
         if(details != null) {
             const embed = new MessageEmbed()
                 .setColor('#e08155')
-                .setTitle(details.title)
-                .setDescription(details.synopsis)
+                .setTitle('Your Recommendations')
                 .setImage(details.picture)
-                .setURL(details.url)
             
             if(data.review != '') {
-                embed.addField(`${this.getCreatingUser()?.username}'s review`, data.review)
+                embed.setDescription(data.review)
             }
 
-            embed.setFooter(`Use ${this.getStartingReactions()[0]} to remove this\nUse ${this.getStartingReactions()[1]} to refresh the list\nRecommendation ${currentPage + 1} of ${totalPages}`)
+            embed.setFooter(`Use ${this.getStartingReactions()[0]} to delete recommendation\nUse ${this.getStartingReactions()[1]} to refresh the list\nUse ${this.getStartingReactions()[2]} to remove this dialog\nRecommendation ${currentPage + 1} of ${totalPages}`)
 
             if(details.englishTitle) {
                 embed.addField('English title', details.englishTitle)
             }
-            if(details.genres.length > 0) {
-                embed.addField('Genres', details.genres.join(', '))
+
+            embed.addField('Japanese Title', details.title)
+
+            embed.addField('Recommendation Date', `${data.date.getUTCFullYear()}-${data.date.getUTCMonth()+1}-${data.date.getUTCDate()}`)
+
+            if(data.type == 'anime') {
+                embed.addField('Type', 'Anime')
+            } else if(data.type == 'manga') {
+                embed.addField('Type', 'Manga')
+            } else {
+                embed.addField('Type', 'Light Novel')
             }
 
             return ['', embed]
         } else {
             const embed = new MessageEmbed()
                 .setColor('#e08155')
-                .setTitle('Title loading...')
+                .setTitle('Your Recommendations')
                 .setDescription('***Loading details...***')
-                .setFooter(`Use ${this.getStartingReactions()[0]} to remove this\nUse ${this.getStartingReactions()[1]} to refresh the list\nRecommendation ${currentPage + 1} of ${totalPages}`)
+                .setFooter(`Use ${this.getStartingReactions()[0]} to delete recommendation\nUse ${this.getStartingReactions()[1]} to refresh the list\nUse ${this.getStartingReactions()[2]} to remove this dialog\nRecommendation ${currentPage + 1} of ${totalPages}`)
+
             return ['', embed]
         }
     }
     getStartingReactions(): string[] {
         if(this.getCurrentSelection() != null)
-            return ['🗑️', '🔄']
+            return ['🗑️', '🔄', '❌']
         return []
     }
     async onReaction(reaction: string, user: User): Promise<boolean> {
