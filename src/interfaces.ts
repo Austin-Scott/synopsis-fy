@@ -54,7 +54,7 @@ export interface Recommendation {
         userId: string
         malId: number
     }
-    date: string
+    date: Date
     review: string
 }
 

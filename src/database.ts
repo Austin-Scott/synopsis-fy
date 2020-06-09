@@ -190,12 +190,12 @@ export async function addRecommendation(recommendation: Recommendation, malURL: 
     }
 }
 
-export async function getAllRecommendations(userId: string): Promise<Array<Recommendation | MalItem>> {
+export async function getAllRecommendations(userId: string): Promise<Array<Recommendation & MalItem>> {
     let recommendations = await dbGetAllRecommendations(userId)
     for(let i=0; i<recommendations.length;i++) {
         recommendations[i] = {...recommendations[i], ...await getMalItem(recommendations[i].link.malId)}
     }
-    return recommendations
+    return recommendations as Array<Recommendation & MalItem>
 }
 
 

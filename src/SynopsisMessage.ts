@@ -1,6 +1,7 @@
 import InteractiveMessage from "./InteractiveMessage"
 import { SearchResult } from "./interfaces"
 import { StringResolvable, MessageEmbed, User } from "discord.js"
+import { addRecommendation } from "./database"
 
 export default class SynopsisMessage extends InteractiveMessage<SearchResult> {
     renderPage(data: SearchResult | null, currentPage: number, isPageLocked: boolean, totalPages: number): [StringResolvable, MessageEmbed | undefined] {
@@ -68,15 +69,39 @@ export default class SynopsisMessage extends InteractiveMessage<SearchResult> {
         }
 
         if(reaction == options[0]) {
+
+            const details = currentSelection.getDetails(()=>{})
+            if(details == null) return false
+
             // They recommend this anime
             if(user.id == this.getCreatingUser()?.id) {
-                //This is the original creator
+            //This is the original creator
+
+                await addRecommendation({
+                    link: {
+                        userId: user.id,
+                        malId: details.id
+                    },
+                    date: new Date(),
+                    review: this.getGlobalState().review
+                }, details.url || currentSelection.malURL, this.getGlobalState().type)
+
                 if(this.getGlobalState().review != '') {
                     await user.send(`You recommended ${currentSelection.title} with a review`)
                     await this.lockCurrentPage()
                     await this.removeAllReactionsOfType(this.getStartingReactions()[1], true)
                     await this.unreact(this.getStartingReactions()[0])
                 } else {
+
+                    await addRecommendation({
+                        link: {
+                            userId: user.id,
+                            malId: details.id
+                        },
+                        date: new Date(),
+                        review: ''
+                    }, details.url || currentSelection.malURL, this.getGlobalState().type)
+
                     await user.send(`You recommended ${currentSelection.title}`)
                 }
             } else {
