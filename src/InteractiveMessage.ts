@@ -1,4 +1,4 @@
-import { StringResolvable, MessageEmbed, Message, User } from "discord.js"
+import { StringResolvable, MessageEmbed, Message, User, ReactionCollector } from "discord.js"
 import { start } from "repl"
 
 export default abstract class InteractiveMessage<T> {
@@ -8,6 +8,7 @@ export default abstract class InteractiveMessage<T> {
     private isPageLocked = false
     private creatingUser: User | null = null
     private message: Message | null = null
+    private collector: ReactionCollector | null = null
 
     constructor(model: Array<T>, state: any = {}) {
         this.model = model
@@ -29,8 +30,13 @@ export default abstract class InteractiveMessage<T> {
         return this.globalState
     }
 
-    async send(msg: Message) {
-        this.creatingUser = msg.author
+    async send(msg: Message, resend: boolean = false) {
+        if(resend == true) {
+            this.collector?.stop()
+            await this.removeMessage()
+        } else {
+            this.creatingUser = msg.author
+        }
         const messageContent = this.renderPage(this.getCurrentSelection(), this.currentPage, this.isPageLocked, this.model.length)
         this.message = await msg.channel.send(messageContent[0], messageContent[1])
 
@@ -45,13 +51,15 @@ export default abstract class InteractiveMessage<T> {
             await this.message.react(this.getNavigateRightSymbol())
         }
 
-        const collector = this.message.createReactionCollector((reaction, user) => true)
-        collector.on('collect', async (reaction, user) => {
+        this.collector = this.message.createReactionCollector((reaction, user) => true)
+        this.collector.on('collect', async (reaction, user) => {
             if(user.bot) return
 
             const identifier = reaction.emoji.name
             if((identifier == this.getNavigateLeftSymbol() || identifier == this.getNavigateRightSymbol()) && !this.isPageLocked) {
-                await this.removeAllReactionsOfType(identifier, false)
+                if(this.message?.guild != null) {
+                    await this.removeAllReactionsOfType(identifier, false)
+                }
                 if(user.id == this.creatingUser?.id) {
                     // Handle navigation
                     const startingPage = this.currentPage
@@ -71,7 +79,7 @@ export default abstract class InteractiveMessage<T> {
                     if(startingPage !== this.currentPage) {
                         // Re-render page
                         await this.onChangePage()
-                        this.requestRerender()
+                        this.requestRerender(true)
                     }
 
                 }
@@ -103,9 +111,13 @@ export default abstract class InteractiveMessage<T> {
         return this.creatingUser
     }
 
-    requestRerender() {
-        const newPage = this.renderPage(this.model[this.currentPage], this.currentPage, this.isPageLocked, this.model.length)
-        this.message?.edit(newPage[0], newPage[1])
+    requestRerender(newMessageInDMs: boolean = false) {
+        if(newMessageInDMs && this.message?.guild == null) {
+            this.send(this.message as Message, true)
+        } else {
+            const newPage = this.renderPage(this.model[this.currentPage], this.currentPage, this.isPageLocked, this.model.length)
+            this.message?.edit(newPage[0], newPage[1])
+        }
     }
 
     async removeAllReactionsOfType(name: string, botInclusive: boolean = false) {
