@@ -62,3 +62,7 @@ export interface Suggestion {
     malItem: MalItem
     recommendations: Array<Recommendation>
 }
+
+export interface SuggestionItem extends Suggestion {
+    getDetails: (arg0: ()=>void) => MalAnimeDataModel | null
+}

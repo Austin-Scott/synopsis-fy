@@ -225,7 +225,85 @@ export async function getAllRecommendations(userId: string): Promise<Array<Recom
 export async function getSuggestions(userIds: Array<string>, type: 'anime' | 'manga' | 'novel' | null, strategy: 'default' | 'recent', genres: Array<string>): Promise<Array<Suggestion>> {
     const serverRecommendations = await dbGetUsersRecommendations(userIds)
     const malIds = serverRecommendations.map(recommendation => recommendation.link.malId)
-    const malItems = await dbGetMalItems(malIds)
-    
+    let malItems = await dbGetMalItems(malIds)
+
+    if(type!=null) {
+        malItems = malItems.filter(item => item.type == type)
+    }
+    if(genres.length>0) {
+        malItems = malItems.filter(item => {
+            let keepFlag = false
+            for(const genre of genres) {
+                if(item.genres.map(item => item.toLowerCase()).includes(genre)) {
+                    keepFlag = true
+                }
+            }
+            return keepFlag
+        })
+    }
+
+    let result: Array<Suggestion> = []
+    for(const malItem of malItems) {
+        result.push(
+            {
+                malItem: malItem,
+                recommendations: serverRecommendations.filter(recommendation => recommendation.link.malId == malItem.malId)
+            }
+        )
+    }
+
+    if(strategy == 'default') {
+        result = result.sort((a, b) => {
+            const numberOfAGenres = a.malItem.genres.reduce<number>((previous: number, current: string): number => {
+                if(genres.includes(current)) return previous + 1
+                return previous
+            }, 0)
+            const numberOfBGenres = b.malItem.genres.reduce<number>((previous: number, current: string): number => {
+                if(genres.includes(current)) return previous + 1
+                return previous
+            }, 0)
+            if(numberOfAGenres > numberOfBGenres) return -1
+            if(numberOfAGenres < numberOfBGenres) return 1
+
+            if(a.recommendations.length > b.recommendations.length) return -1
+            if(a.recommendations.length < b.recommendations.length) return 1
+
+            const numberOfAReviews = a.recommendations.filter(recommendation => recommendation.review.length > 0).length
+            const numberOfBReviews = b.recommendations.filter(recommendation => recommendation.review.length > 0).length
+
+            if(numberOfAReviews > numberOfBReviews) return -1
+            if(numberOfAReviews < numberOfBReviews) return 1
+            return 0
+        })
+    } else {
+        result = result.sort((a, b) => {
+            const numberOfAGenres = a.malItem.genres.reduce<number>((previous: number, current: string): number => {
+                if(genres.includes(current)) return previous + 1
+                return previous
+            }, 0)
+            const numberOfBGenres = b.malItem.genres.reduce<number>((previous: number, current: string): number => {
+                if(genres.includes(current)) return previous + 1
+                return previous
+            }, 0)
+            if(numberOfAGenres > numberOfBGenres) return -1
+            if(numberOfAGenres < numberOfBGenres) return 1
+
+            const timeOfLastAReview = a.recommendations.reduce<Date>((previous: Date, current: Recommendation): Date => {
+                if(previous < current.date) return current.date
+                return previous
+            }, new Date(0))
+            const timeOfLastBReview = b.recommendations.reduce<Date>((previous: Date, current: Recommendation): Date => {
+                if(previous < current.date) return current.date
+                return previous
+            }, new Date(0))
+            if(timeOfLastAReview > timeOfLastBReview) return -1
+            if(timeOfLastAReview < timeOfLastBReview) return 1
+
+            return 0
+        })
+
+    }
+
+    return result
 }
 

@@ -26,7 +26,7 @@ export default class MylistMessage extends InteractiveMessage<Recommendation & M
                 embed.setDescription(data.review)
             }
 
-            embed.setFooter(`Use ${this.getStartingReactions()[0]} to delete recommendation\nUse ${this.getStartingReactions()[1]} to refresh the list\nUse ${this.getStartingReactions()[2]} to remove this dialog\nRecommendation ${currentPage + 1} of ${totalPages}`)
+            embed.setFooter(`Use ${this.getStartingReactions()[0]} to delete recommendation\nUse ${this.getStartingReactions()[1]} to remove this dialog\nRecommendation ${currentPage + 1} of ${totalPages}`)
 
             if(details.englishTitle) {
                 embed.addField('English title', details.englishTitle)
@@ -50,14 +50,14 @@ export default class MylistMessage extends InteractiveMessage<Recommendation & M
                 .setColor('#e08155')
                 .setTitle('Your Recommendations')
                 .setDescription('***Loading details...***')
-                .setFooter(`Use ${this.getStartingReactions()[0]} to delete recommendation\nUse ${this.getStartingReactions()[1]} to refresh the list\nUse ${this.getStartingReactions()[2]} to remove this dialog\nRecommendation ${currentPage + 1} of ${totalPages}`)
+                .setFooter(`Use ${this.getStartingReactions()[0]} to delete recommendation\nUse ${this.getStartingReactions()[1]} to remove this dialog\nRecommendation ${currentPage + 1} of ${totalPages}`)
 
             return ['', embed]
         }
     }
     getStartingReactions(): string[] {
         if(this.getCurrentSelection() != null)
-            return ['🗑️', '🔄', '❌']
+            return ['🗑️', '❌']
         return []
     }
     async onReaction(reaction: string, user: User): Promise<boolean> {
