@@ -87,7 +87,7 @@ export default class SynopsisMessage extends InteractiveMessage<SearchResult> {
                 }, details.url || currentSelection.malURL, this.getGlobalState().type)
 
                 if(this.getGlobalState().review != '') {
-                    await user.send(`You recommended ${currentSelection.title} with a review`)
+                    await user.send(`You recommended **${details.englishTitle || currentSelection.title}** with a review. View all of your recommendations with \`s!mylist\`.`)
                     await this.lockCurrentPage()
                     await this.removeAllReactionsOfType(this.getStartingReactions()[1], true)
                     await this.unreact(this.getStartingReactions()[0])
@@ -102,10 +102,10 @@ export default class SynopsisMessage extends InteractiveMessage<SearchResult> {
                         review: ''
                     }, details.url || currentSelection.malURL, this.getGlobalState().type)
 
-                    await user.send(`You recommended ${currentSelection.title}`)
+                    await user.send(`You recommended **${details.englishTitle || currentSelection.title}**. View all of your recommendations with \`s!mylist\`.`)
                 }
             } else {
-                await user.send(`You recommended ${currentSelection.title}`)
+                await user.send(`You recommended **${details.englishTitle || currentSelection.title}**. View all of your recommendations with \`s!mylist\`.`)
             }
             return true
         } else if(user.id == this.getCreatingUser()?.id && reaction == options[1]) {

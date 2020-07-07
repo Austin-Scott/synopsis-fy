@@ -25,6 +25,12 @@ export async function searchMal(type: 'anime' | 'manga' | 'novel', query: string
             term: query,
             type: typeQuery
         })
+
+        // For now all NSFW results will simply be filtered out. Perhaps in the future I could change this to show only in NSFW channels.
+        results = results.filter(result => {
+            return result.rating != "Rx"
+        })
+
         if(type == 'manga') {
             results = results.filter(result => {
                 return result.type != 'Novel'

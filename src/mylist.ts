@@ -30,13 +30,13 @@ export default async function mylist(msg: Message) {
         dbDeleteRecommendation(userID, malID)
             .then(value => {
                 if(value) {
-                    msg.author.send(`Your recommendation for ${title} has successfully been deleted.`)
+                    msg.author.send(`Your recommendation for **${title}** has successfully been deleted.`)
                 } else {
-                    msg.author.send(`I was unable to delete your recommendation for ${title}. It is likely that is has already been deleted.`)
+                    msg.author.send(`I was unable to find your recommendation for **${title}**. It is likely that is has already been deleted.`)
                 }
             })
             .catch(error => {
-                msg.author.send(`Something went wrong with deleting ${title}. Please try again later.`)
+                msg.author.send(`Something went wrong with deleting **${title}**. Please try again later.`)
             })
     }
     const message = new MylistMessage(recommendations, {deleteRecommendation: deleteRecommendation})

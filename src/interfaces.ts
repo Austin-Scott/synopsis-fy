@@ -24,6 +24,7 @@ export interface MalAnimeSearchModel {
     title: string
     id: number
     type: string
+    rating: string
 }
 
 export interface MalAnimeDataModel {
