@@ -138,6 +138,12 @@ export default abstract class InteractiveMessage<T> {
         
     }
 
+    removeCurrentPage() {
+        this.model.splice(this.currentPage, 1)
+        this.currentPage = Math.min(this.model.length - 1, this.currentPage)
+        this.requestRerender(true)
+    }
+
     async unreact(name: string) {
         const reactions = this.message?.reactions.cache.find(reaction => reaction.emoji.name == name)
         const users = await reactions?.users.fetch()

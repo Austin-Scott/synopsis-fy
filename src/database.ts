@@ -1,6 +1,8 @@
 import Database from 'nedb'
 import { ChannelWhitelist, MalItem, Recommendation, Suggestion } from './interfaces'
 import { getDetailsIfAvailable, getMalDetails } from './myAnimeList'
+import { resolve } from 'path'
+import { rejects } from 'assert'
 
 const db = {
     ChannelWhitelist: new Database({
@@ -166,6 +168,18 @@ function getRecommendation(userId: string, malId: number): Promise<Recommendatio
 function modifyRecommendation(userId: string, malId: number, newRecommendation: Recommendation): Promise<boolean> {
     return new Promise((resolve, reject) => {
         db.Recommendation.update({ 'link.userId': userId, 'link.malId': malId }, { date: newRecommendation.date, review: newRecommendation.review }, {}, (error, number) => {
+            if(error) {
+                reject(error)
+            } else {
+                resolve(number == 1)
+            }
+        })
+    })
+}
+
+export function deleteRecommendation(userId: string, malId: number): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+        db.Recommendation.remove({ 'link.userId': userId, 'link.malId': malId }, (error, number) => {
             if(error) {
                 reject(error)
             } else {

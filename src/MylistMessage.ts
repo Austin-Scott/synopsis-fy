@@ -61,6 +61,18 @@ export default class MylistMessage extends InteractiveMessage<Recommendation & M
         return []
     }
     async onReaction(reaction: string, user: User): Promise<boolean> {
+        const options = this.getStartingReactions()
+
+        if(reaction == options[0]) {
+            const title = this.getCurrentSelection()?.getDetails(()=>{})?.englishTitle || '*Title not loaded*'
+            this.getGlobalState().deleteRecommendation(title, this.getCreatingUser()?.id, this.getCurrentSelection()?.malId)
+            this.removeCurrentPage()
+            return false
+        }
+        else if(reaction == options[1]) {
+            await this.removeMessage()
+            return true
+        }
         return true
     }
     async onChangePage(): Promise<void> {
