@@ -27,7 +27,14 @@ export default class SuggestMessage extends InteractiveMessage<SuggestionItem> {
             
             embed.setFooter(`Use ${this.getStartingReactions()[0]} to remove this dialog\nSuggestion ${currentPage + 1} of ${totalPages}`)
 
-            embed.addField('Recommendations', `${data.recommendations.length} ${data.recommendations.length == 1 ? 'person' : 'people'} on this server ${data.recommendations.length == 1 ? 'recommends' : 'recommend'} this item.`)
+            const discordIdToNickname = this.getGlobalState().discordIdToNickname
+            embed.addField('Recommended by', data.recommendations.map(recommendation => discordIdToNickname(recommendation.link.userId)).join(', '))
+
+            const reviews = data.recommendations.filter(recommendation => recommendation.review != '')
+            if(reviews.length > 0) {
+                const review = reviews[Math.floor(Math.random() * reviews.length)]
+                embed.addField('Review', '"'+review.review + '"-'+discordIdToNickname(review.link.userId))
+            }
 
             if(details.englishTitle) {
                 embed.addField('Japanese title', details.title)
@@ -41,7 +48,7 @@ export default class SuggestMessage extends InteractiveMessage<SuggestionItem> {
             const embed = new MessageEmbed()
                 .setColor('#e08155')
                 .setTitle('Loading...')
-                .setDescription('***Loading details...***')
+                .setDescription('Downloading details from *MyAnimeList.net*...')
                 .setURL(data.malItem.malUrl)
                 .setFooter(`Use ${this.getStartingReactions()[0]} to remove this dialog\nSuggestion ${currentPage + 1} of ${totalPages}`)
             return ['', embed]

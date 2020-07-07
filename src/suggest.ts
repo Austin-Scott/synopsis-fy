@@ -81,6 +81,17 @@ export default async function suggest(msg: Message, query: string) {
         }
     })
 
-    const suggestMessage = new SuggestMessage(suggestionItems)
+    const discordIdToNickname = (discordId: string) => {
+        const guild = msg.guild
+        const user = msg.client.users.cache.get(discordId)
+        if(user != undefined) {
+            const member = msg.guild?.member(user)
+            return member?.displayName || user.username
+        } else {
+            return 'Unknown'
+        }
+    }
+
+    const suggestMessage = new SuggestMessage(suggestionItems, {discordIdToNickname: discordIdToNickname})
     suggestMessage.send(msg)
 }

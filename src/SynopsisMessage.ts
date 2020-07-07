@@ -48,7 +48,7 @@ export default class SynopsisMessage extends InteractiveMessage<SearchResult> {
             const embed = new MessageEmbed()
                 .setColor('#e08155')
                 .setTitle(data.title)
-                .setDescription('***Loading details...***')
+                .setDescription('Downloading details from *MyAnimeList.net*...')
                 .setImage(data.imageURL)
                 .setURL(data.malURL)
                 .setFooter(`Use ${this.getStartingReactions()[0]} to recommend this\nUse ${this.getStartingReactions()[1]} to remove this dialog\nResult ${currentPage + 1} of ${totalPages}`)
