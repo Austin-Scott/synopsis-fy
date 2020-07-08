@@ -53,6 +53,11 @@ const validGenres = [
 ]
 
 export default async function suggest(msg: Message, query: string) {
+    if(msg.guild == null) {
+        msg.reply('That commannd only works on servers, not in DMs.')
+        return
+    }
+
     const lowerCaseQuery = query.toLowerCase()
     const genres = validGenres.filter(genre => lowerCaseQuery.search(genre) != -1)
     const type = (['anime', 'manga', 'novel'].find(value => lowerCaseQuery.search(value) != -1) || null) as 'anime' | 'manga' | 'novel' | null

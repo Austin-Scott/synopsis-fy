@@ -4,6 +4,10 @@ import { addChannelWhitelist, removeChannelWhitelist } from "./database"
 const channelIdMatcher = / <#(\d+)>/
 
 export async function enable(msg: Message, channel: string) {
+    if(msg.guild == null) {
+        msg.reply('That commannd only works on servers, not in DMs.')
+        return
+    }
     if(!msg.member || !msg.member.hasPermission('ADMINISTRATOR')) {
         // This user does not have permission to use that command.
         msg.reply('You must be a server administrator to use that command.')
@@ -45,6 +49,10 @@ export async function enable(msg: Message, channel: string) {
 }
 
 export async function disable(msg: Message, channel: string) {
+    if(msg.guild == null) {
+        msg.reply('That commannd only works on servers, not in DMs.')
+        return
+    }
     if(!msg.member || !msg.member.hasPermission('ADMINISTRATOR')) {
         // This user does not have permission to use that command.
         msg.reply('You must be a server administrator to use that command.')
