@@ -87,7 +87,7 @@ export async function about(msg: Message) {
 
 Powered by *MyAnimeList.net*: <https://MyAnimeList.net>
 Add this bot to your own server: <https://discordapp.com/oauth2/authorize?&client_id=657318125989003323&scope=bot&permissions=8>
-View the source code: <https://github.com/Austin-Scott/synopsis-fy>
+View the source code or report a bug: <https://github.com/Austin-Scott/synopsis-fy>
 
 Version: 2.0
 Created with ❤️ for the *UW-Stout An-Bu Club* by Austin Scott
