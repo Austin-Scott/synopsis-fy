@@ -11,7 +11,7 @@ export default class SynopsisMessage extends InteractiveMessage<SearchResult> {
                 .setColor('#e08155')
                 .setTitle('No results found')
                 .setFooter('Result 0 of 0')
-                .setDescription('No results on MyAnimeList were found.')
+                .setDescription('Either no results on MyAnimeList were found, or MyAnimeList failed to respond to your search request.\nPlease try again later.')
 
             return ['', embed]
         }
@@ -92,19 +92,10 @@ export default class SynopsisMessage extends InteractiveMessage<SearchResult> {
 
                 if(this.getGlobalState().review != '') {
                     await user.send(`You recommended **${details.englishTitle || currentSelection.title}** with a review. View all of your recommendations with \`s!mylist\`.`)
-                    await this.lockCurrentPage()
                     await this.removeAllReactionsOfType(this.getStartingReactions()[1], true)
                     await this.unreact(this.getStartingReactions()[0])
+                    await this.lockCurrentPage()
                 } else {
-
-                    await addRecommendation({
-                        link: {
-                            userId: user.id,
-                            malId: details.id
-                        },
-                        date: new Date(),
-                        review: ''
-                    }, details.url || currentSelection.malURL, this.getGlobalState().type)
 
                     await user.send(`You recommended **${details.englishTitle || currentSelection.title}**. View all of your recommendations with \`s!mylist\`.`)
                 }
@@ -112,10 +103,15 @@ export default class SynopsisMessage extends InteractiveMessage<SearchResult> {
                 await user.send(`You recommended **${details.englishTitle || currentSelection.title}**. View all of your recommendations with \`s!mylist\`.`)
             }
             return true
-        } else if(user.id == this.getCreatingUser()?.id && reaction == options[1]) {
-            await this.removeMessage()
-            return true
+        } else if(!this.isLocked && reaction == options[1]) {
+            if(user.id == this.getCreatingUser()?.id) {
+                await this.removeMessage()
+                return true
+            } else {
+                return false
+            }
         }
+
         return true
     }
     async onChangePage(): Promise<void> {

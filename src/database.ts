@@ -167,7 +167,7 @@ function getRecommendation(userId: string, malId: number): Promise<Recommendatio
 
 function modifyRecommendation(userId: string, malId: number, newRecommendation: Recommendation): Promise<boolean> {
     return new Promise((resolve, reject) => {
-        db.Recommendation.update({ 'link.userId': userId, 'link.malId': malId }, { date: newRecommendation.date, review: newRecommendation.review }, {}, (error, number) => {
+        db.Recommendation.update({ 'link': newRecommendation.link }, { date: newRecommendation.date, review: newRecommendation.review }, {}, (error, number) => {
             if(error) {
                 reject(error)
             } else {
@@ -218,7 +218,8 @@ export async function addRecommendation(recommendation: Recommendation, malURL: 
                 replace = true
             }
             if(replace) {
-                await modifyRecommendation(recommendation.link.userId, recommendation.link.malId, recommendation)
+                await deleteRecommendation(recommendation.link.userId, recommendation.link.malId)
+                await dbAddRecommendation(recommendation)
                 return recommendation
             } else {
                 return oldRecommendation
@@ -269,11 +270,11 @@ export async function getSuggestions(userIds: Array<string>, type: 'anime' | 'ma
     if(strategy == 'default') {
         result = result.sort((a, b) => {
             const numberOfAGenres = a.malItem.genres.reduce<number>((previous: number, current: string): number => {
-                if(genres.map(genre => genre.toLowerCase()).includes(current)) return previous + 1
+                if(genres.map(genre => genre.toLowerCase()).includes(current.toLowerCase())) return previous + 1
                 return previous
             }, 0)
             const numberOfBGenres = b.malItem.genres.reduce<number>((previous: number, current: string): number => {
-                if(genres.map(genre => genre.toLowerCase()).includes(current)) return previous + 1
+                if(genres.map(genre => genre.toLowerCase()).includes(current.toLowerCase())) return previous + 1
                 return previous
             }, 0)
             if(numberOfAGenres > numberOfBGenres) return -1

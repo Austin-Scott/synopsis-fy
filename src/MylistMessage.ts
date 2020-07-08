@@ -58,21 +58,31 @@ export default class MylistMessage extends InteractiveMessage<Recommendation & M
     getStartingReactions(): string[] {
         if(this.getCurrentSelection() != null)
             return ['🗑️', '❌']
-        return []
+        return ['❌']
     }
     async onReaction(reaction: string, user: User): Promise<boolean> {
         const options = this.getStartingReactions()
+        const currentSelection = this.getCurrentSelection()
 
-        if(reaction == options[0]) {
-            const title = this.getCurrentSelection()?.getDetails(()=>{})?.englishTitle || '*Title not loaded*'
-            this.getGlobalState().deleteRecommendation(title, this.getCreatingUser()?.id, this.getCurrentSelection()?.malId)
-            this.removeCurrentPage()
-            return false
+        if(currentSelection != null && reaction == options[0]) {
+            if(user.id == this.getCreatingUser()?.id) {
+                const title = this.getCurrentSelection()?.getDetails(()=>{})?.englishTitle || '*Title not loaded*'
+                this.getGlobalState().deleteRecommendation(title, this.getCreatingUser()?.id, this.getCurrentSelection()?.malId)
+                this.removeCurrentPage()
+                return false
+            } else {
+                return false
+            }
         }
-        else if(reaction == options[1]) {
-            await this.removeMessage()
-            return true
+        else if(reaction == options[1] || (currentSelection == null && reaction == options[0])) {
+            if(user.id == this.getCreatingUser()?.id) {
+                await this.removeMessage()
+                return true
+            } else {
+                return false
+            }
         }
+
         return true
     }
     async onChangePage(): Promise<void> {

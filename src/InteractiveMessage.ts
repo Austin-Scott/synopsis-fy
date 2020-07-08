@@ -147,6 +147,8 @@ export default abstract class InteractiveMessage<T> {
     }
 
     async unreact(name: string) {
+        if(this.message?.guild == null) return
+
         const reactions = this.message?.reactions.cache.find(reaction => reaction.emoji.name == name)
         const users = await reactions?.users.fetch()
         if(users !== undefined) {

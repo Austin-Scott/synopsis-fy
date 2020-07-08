@@ -68,8 +68,12 @@ export default class SuggestMessage extends InteractiveMessage<SuggestionItem> {
         }
 
         if(reaction == options[0]) {
-            await this.removeMessage()
-            return true
+            if(user.id == this.getCreatingUser()?.id) {
+                await this.removeMessage()
+                return true
+            } else {
+                return false
+            }
         }
         return true
     }
