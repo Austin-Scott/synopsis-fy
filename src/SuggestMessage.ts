@@ -33,7 +33,7 @@ export default class SuggestMessage extends InteractiveMessage<SuggestionItem> {
             const reviews = data.recommendations.filter(recommendation => recommendation.review != '')
             if(reviews.length > 0) {
                 const review = reviews[Math.floor(Math.random() * reviews.length)]
-                embed.addField('Review', '"'+review.review + '"-'+discordIdToNickname(review.link.userId))
+                embed.addField(discordIdToNickname(review.link.userId)+'\'s Review', '>>> '+review.review)
             }
 
             if(details.englishTitle) {

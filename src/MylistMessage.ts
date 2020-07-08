@@ -49,7 +49,7 @@ export default class MylistMessage extends InteractiveMessage<Recommendation & M
             const embed = new MessageEmbed()
                 .setColor('#e08155')
                 .setTitle('Your Recommendations')
-                .setDescription('***Loading details...***')
+                .setDescription('Downloading details from *MyAnimeList.net*...')
                 .setFooter(`Use ${this.getStartingReactions()[0]} to delete recommendation\nUse ${this.getStartingReactions()[1]} to remove this dialog\nRecommendation ${currentPage + 1} of ${totalPages}`)
 
             return ['', embed]

@@ -26,7 +26,7 @@ export default class SynopsisMessage extends InteractiveMessage<SearchResult> {
                 .setURL(data.malURL)
             
             if(this.getGlobalState().review != '') {
-                embed.addField(`${this.getCreatingUser()?.username}'s review`, this.getGlobalState().review)
+                embed.addField(this.getGlobalState().discordIdToNickname(this.getCreatingUser()?.id)+'\'s Review', '>>> '+this.getGlobalState().review)
                 if(isPageLocked) {
                     embed.setFooter(`Use ${this.getStartingReactions()[0]} to join ${this.getCreatingUser()?.username} in recommending this`)
                 } else {

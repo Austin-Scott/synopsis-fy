@@ -269,11 +269,11 @@ export async function getSuggestions(userIds: Array<string>, type: 'anime' | 'ma
     if(strategy == 'default') {
         result = result.sort((a, b) => {
             const numberOfAGenres = a.malItem.genres.reduce<number>((previous: number, current: string): number => {
-                if(genres.includes(current)) return previous + 1
+                if(genres.map(genre => genre.toLowerCase()).includes(current)) return previous + 1
                 return previous
             }, 0)
             const numberOfBGenres = b.malItem.genres.reduce<number>((previous: number, current: string): number => {
-                if(genres.includes(current)) return previous + 1
+                if(genres.map(genre => genre.toLowerCase()).includes(current)) return previous + 1
                 return previous
             }, 0)
             if(numberOfAGenres > numberOfBGenres) return -1
@@ -292,11 +292,11 @@ export async function getSuggestions(userIds: Array<string>, type: 'anime' | 'ma
     } else {
         result = result.sort((a, b) => {
             const numberOfAGenres = a.malItem.genres.reduce<number>((previous: number, current: string): number => {
-                if(genres.includes(current)) return previous + 1
+                if(genres.map(genre => genre.toLowerCase()).includes(current)) return previous + 1
                 return previous
             }, 0)
             const numberOfBGenres = b.malItem.genres.reduce<number>((previous: number, current: string): number => {
-                if(genres.includes(current)) return previous + 1
+                if(genres.map(genre => genre.toLowerCase()).includes(current)) return previous + 1
                 return previous
             }, 0)
             if(numberOfAGenres > numberOfBGenres) return -1
