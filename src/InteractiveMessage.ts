@@ -121,6 +121,8 @@ export default abstract class InteractiveMessage<T> {
     }
 
     async removeAllReactionsOfType(name: string, botInclusive: boolean = false) {
+        if(this.message?.guild == null) return
+
         const reactions = this.message?.reactions.cache.find(reaction => reaction.emoji.name == name)
         if(botInclusive) {
             await reactions?.remove()
