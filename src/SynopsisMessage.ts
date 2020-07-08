@@ -4,6 +4,7 @@ import { StringResolvable, MessageEmbed, User } from "discord.js"
 import { addRecommendation } from "./database"
 
 export default class SynopsisMessage extends InteractiveMessage<SearchResult> {
+    isLocked = false
     renderPage(data: SearchResult | null, currentPage: number, isPageLocked: boolean, totalPages: number): [StringResolvable, MessageEmbed | undefined] {
         if(data == null) {
             const embed = new MessageEmbed()
@@ -58,8 +59,11 @@ export default class SynopsisMessage extends InteractiveMessage<SearchResult> {
     getStartingReactions(): string[] {
         if(this.getCurrentSelection() == null) {
             return []
+        } else if(!this.isLocked) {
+            return ['👍', '❌']
+        } else {
+            return ['👍']
         }
-        return ['👍', '❌']
     }
     async onReaction(reaction: string, user: User): Promise<boolean> {
         const options = this.getStartingReactions()
@@ -118,7 +122,7 @@ export default class SynopsisMessage extends InteractiveMessage<SearchResult> {
         await this.removeAllReactionsOfType(this.getStartingReactions()[0], false)
     }
     async onLockSelection(): Promise<void> {
-        
+        this.isLocked = true
     }
 
 }

@@ -98,7 +98,7 @@ export default abstract class InteractiveMessage<T> {
             await this.onLockSelection()
             await this.removeAllReactionsOfType(this.getNavigateLeftSymbol(), true)
             await this.removeAllReactionsOfType(this.getNavigateRightSymbol(), true)
-            this.requestRerender()
+            this.requestRerender(true)
         }
     }
 
