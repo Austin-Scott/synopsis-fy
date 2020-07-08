@@ -18,7 +18,7 @@ client.on('message', async msg => {
     try {
         if (!msg.author.bot) {
             // Tested at: https://regex101.com/r/0Z9Wcu/2
-            const synopsisCommandMatcher = /^s!(anime|a|manga|m|novel|n) ("(.*)" ?(.*)|(.*))$/
+            const synopsisCommandMatcher = /^s!(anime|a|manga|m|novel|n) ("(.*?)" ?(.*)|(.*))$/
             // Tested at: https://regex101.com/r/YglfCW/1
             const suggestCommandMatcher = /^s!(suggest|s)( (.+))?$/
             const enableCommandMatcher = /^s!enable( (.+))?$/
