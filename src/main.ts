@@ -6,12 +6,32 @@ import { enable, disable } from './administration'
 import { help, about } from './helpAndAbout'
 import mylist from './mylist'
 import { isChannelWhitelisted } from './database'
+import isReachable from 'is-reachable'
 
 const client = new Discord.Client()
 
+let MALIsOnline: Boolean = false
+let showingMALStatus: Boolean = true
+
+async function checkMALStatus() {
+    MALIsOnline = await isReachable('https://myanimelist.net/')
+}
+
+function toggleBotStatus() {
+    if(showingMALStatus) {
+        client.user?.setPresence({ activity: { name: '| s!help', type: 'WATCHING' }, status: 'online' })
+    } else {
+        client.user?.setPresence({ activity: { name: MALIsOnline ? '| MAL 🟢Online' : '| MAL 🔴Offline', type: 'WATCHING' }, status: 'online' })
+    }
+    showingMALStatus = !showingMALStatus
+}
+
 client.on('ready', () => {
     console.log(`Logged in as ${client.user?.tag}`)
-    client.user?.setPresence({ activity: { name: '| s!help', type: 'WATCHING' }, status: 'online' })
+    checkMALStatus()
+    toggleBotStatus()
+    setInterval(checkMALStatus, 10 * 60 * 1000)
+    setInterval(toggleBotStatus, 30 * 1000)
 })
 
 client.on('message', async msg => {
