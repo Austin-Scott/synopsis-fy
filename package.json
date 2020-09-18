@@ -19,12 +19,12 @@
   },
   "homepage": "https://github.com/Austin-Scott/synopsis-fy#readme",
   "dependencies": {
-    "@types/nedb": "^1.8.9",
-    "@types/node": "^14.0.11",
-    "@types/ws": "^7.2.5",
-    "discord.js": "^12.2.0",
+    "@types/nedb": "^1.8.11",
+    "@types/node": "^14.11.1",
+    "@types/ws": "^7.2.6",
+    "discord.js": "^12.3.1",
     "is-reachable": "^4.0.0",
-    "mal-scraper": "^2.6.9",
+    "mal-scraper": "^2.10.0",
     "nedb": "^1.8.0"
   }
 }
