@@ -111,7 +111,7 @@ function dbAddRecommendation(recommendation: Recommendation): Promise<Recommenda
             if(error) {
                 reject(error)
             } else {
-                resolve(error)
+                resolve(recommendation)
             }
         })
     })
